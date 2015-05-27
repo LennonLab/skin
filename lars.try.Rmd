@@ -1,0 +1,47 @@
+group lasso
+http://cran.r-project.org/web/packages/lars/lars.pdf
+
+
+http://statweb.stanford.edu/~tibs/lasso/simple.html
+install.packages("gglasso")
+require(gglasso)
+install.packages("lars")
+require(lars)
+data(diabetes)
+str(diabetes)
+lar <- lars(diabetes$x, diabetes$y, type = "lar",
+    trace = FALSE, normalize = TRUE, intercept = TRUE, Gram, 
+    eps = .Machine$double.eps, use.Gram = FALSE)
+    
+
+par(mfrow=c(2,2))
+attach(diabetes)
+object <- lars(diabetes$x,diabetes$y)
+plot(object)
+object2 <- lars(diabetes$x,diabetes$y,type="lar")
+plot(object2)
+object3 <- lars(diabetes$x,diabetes$y,type="for") # Can use abbreviations
+plot(object3)
+
+plot(diabetes$x, xvar= c("norm", "df", "arc.length", "step"), 
+    breaks = TRUE, plottype = c("coefficients","Cp"), 
+    omit.zeros = TRUE, eps = 1e-10)
+    
+object <- lars(diabetes$x,diabetes$y)
+plot(object)
+
+fits <- predict.lars(object, diabetes$x, type="fit")
+
+predict(object, newx, s, type = c("fit", "coefficients"), mode = c("step",
+"fraction", "norm", "lambda"),)
+
+summary(object, sigma2=NULL)
+
+
+library(gglasso)
+data(bardet)
+str(bardet)
+group1 <- rep(1:20,each=5)
+m1 <- gglasso(x = bardet$x, y = bardet$y, group = group1, loss = "ls")
+
+

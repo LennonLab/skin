@@ -1,0 +1,92 @@
+---
+title: "Skin Microbiome"
+author: "Jay T. Lennon"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+   - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+## 1) Retrieve and Set Your Working Directory
+
+```{r, results = 'hide'}
+rm(list = ls())
+getwd()
+setwd("~/GitHub/skin")
+```
+
+## 2) Load data
+```{r}
+# Load raw data
+ctc <- read.table("data/skin.isolate.CTC.txt", sep = "\t", header = TRUE)
+
+# Look at raw data structure
+str(ctc)
+```
+
+## 3) Subsetting Data
+```{r}
+# treatment info
+treat <- cbind(as.data.frame(ctc$Strain), ctc$Rep, ctc$Treat)
+
+# cells with no CTC
+minus <- ctc[ctc$Treat == "minus",]
+
+# killed cells with CTC
+kill <- ctc[ctc$Treat == "kill",]
+
+# cells incubated with CTC
+plus <- ctc[ctc$Treat == "plus",]
+```
+
+## 4) Correcting data and regressions with all data
+```{r}
+# kill-corrected
+kill.corr <- kill$Fluor - minus$Fluor
+
+# plus-corrected
+plus.corr <- plus$Fluor - minus$Fluor
+
+# biomass via absorbance (minus CTC)
+biomass.minus <- minus$Abs
+fit1 <- lm(plus.corr ~ biomass.minus)
+plot(biomass.minus, plus.corr)
+abline(fit1)
+
+# biomass via absorbance (plus CTC)
+biomass.plus <- plus$Abs
+fit2 <- lm(plus.corr ~ biomass.plus)
+plot(biomass.plus, plus.corr)
+abline(fit2)
+```
+
+
+## 5) Correcting data and regressions with means
+```{r}
+
+plus.mean <- aggregate(plus$Fluor, list(plus$Strain), FUN=mean, na.rm=TRUE)
+cont.mean <- aggregate(minus$Fluor, list(minus$Strain), FUN=mean, na.rm =TRUE)
+corr.mean <- plus.mean[,2]-cont.mean[,2]
+
+biomass.minus.mean <- aggregate(minus$Abs, list(minus$Strain), FUN=mean, na.rm =TRUE)
+biomass.plus.mean <- aggregate(plus$Abs, list(plus$Strain), FUN=mean, na.rm =TRUE)
+
+# biomass via absorbance (minus CTC)
+fit3 <- lm(corr.mean ~ biomass.minus.mean[,2])
+plot(biomass.minus.mean[,2], corr.mean)
+abline(fit3)
+
+# biomass via absorbance (plus CTC)
+fit4 <- lm(corr.mean ~ biomass.plus.mean[,2])
+plot(biomass.plus.mean[,2], corr.mean)
+abline(fit4)
+
+## 4) Run t-test by strain
+strains <- unique(ctc$Strain)
+strains <- rep(strains, each = 3)
+reps <- rep(seq(1,3), 10)
+data <- cbind(as.data.frame(strains), reps, kill.corr, plus.corr)
+
+apply(data,1,)
+

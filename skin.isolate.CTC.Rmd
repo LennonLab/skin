@@ -40,13 +40,75 @@ kill <- ctc[ctc$Treat == "kill",]
 plus <- ctc[ctc$Treat == "plus",]
 ```
 
-## 4) Correcting data and regressions with all data
+## 4) Correcting and making new dataframe
 ```{r}
+# Correct dtat by controls
+
 # kill-corrected
 kill.corr <- kill$Fluor - minus$Fluor
 
 # plus-corrected
 plus.corr <- plus$Fluor - minus$Fluor
+
+# Create strains vector
+strains <- c("K1", "K1", "K1", "K2", "K2", "K2", "K3", "K3", "K3",
+             "F1", "F1", "F1", "F2", "F2", "F2", "B1", "B1", "B1", "K4",
+             "K4", "K4", "K5", "K5","K5", "K6", "K6","K6","EC","EC", "EC")
+
+# Merge into new data frame
+data.corr <- as.data.frame(cbind(strains, kill.corr, plus.corr))
+data.corr$kill.corr <- as.numeric(as.character(data.corr$kill.corr))
+data.corr$plus.corr <- as.numeric(as.character(data.corr$plus.corr))
+as.data.frame(data.corr)
+```
+
+## 5) Multiple paired t-test
+```{r}
+# Create output matrix for summary statistics
+test.out <- matrix(data =NA, length(levels(data.corr$strains)), 3)
+row.names(test.out) <- c("K1", "K2", "K3", "F1", "F2", "B1", "K4", "K5", "K6", "EC")
+colnames(test.out) <- c("t.value", "df", "p.value")
+
+# For loop to run t-tests
+for(i in levels(data.corr$strains)) {
+  tmp = data.corr[data.corr$strains == i,]
+  test = t.test(tmp$kill.corr, tmp$plus.corr, paired = TRUE)
+  test.out[i, "t.value"] <- test$statistic
+  test.out[i, "df"] <- test$parameter
+  test.out[i, "p.value"] <- test$p.value
+  }
+
+# Benjamini & Hochberg correction for multiple comparisons
+p.adjust <- p.adjust(test.out[,3], method = "BH", n = length(test.out[,3]))
+
+# Final output matrix with corrected p-values
+test.out.final <- cbind(test.out, p.adjust) 
+# For loop to run t-tests
+```
+  
+## 6) Means and figure
+
+  
+
+  
+  
+  
+  
+  
+sub<- as.data.frame(data.corr[1:3,])
+t.test(sub$kill.corr, sub$plus.corr, paired = TRUE)
+
+
+t.result <- apply(data.corr[,2:3], 1, t.test)
+
+
+
+t.test(data.corr$kill.corr, data.corr$plus.corr)
+
+mapply(t.test, data.corr$kill.corr, data.corr$plus.corr, paired = TRUE)
+```
+
+## 5) Regressions with all data
 
 # biomass via absorbance (minus CTC)
 biomass.minus <- minus$Abs
@@ -62,7 +124,7 @@ abline(fit2)
 ```
 
 
-## 5) Correcting data and regressions with means
+## 6) Correcting data and regressions with means
 ```{r}
 
 plus.mean <- aggregate(plus$Fluor, list(plus$Strain), FUN=mean, na.rm=TRUE)

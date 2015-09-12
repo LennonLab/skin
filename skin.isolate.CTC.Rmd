@@ -87,68 +87,62 @@ test.out.final <- cbind(test.out, p.adjust)
 ```
   
 ## 6) Means and figure
-
-  
-
-  
-  
-  
-  
-  
-sub<- as.data.frame(data.corr[1:3,])
-t.test(sub$kill.corr, sub$plus.corr, paired = TRUE)
-
-
-t.result <- apply(data.corr[,2:3], 1, t.test)
-
-
-
-t.test(data.corr$kill.corr, data.corr$plus.corr)
-
-mapply(t.test, data.corr$kill.corr, data.corr$plus.corr, paired = TRUE)
-```
-
-## 5) Regressions with all data
-
-# biomass via absorbance (minus CTC)
-biomass.minus <- minus$Abs
-fit1 <- lm(plus.corr ~ biomass.minus)
-plot(biomass.minus, plus.corr)
-abline(fit1)
-
-# biomass via absorbance (plus CTC)
-biomass.plus <- plus$Abs
-fit2 <- lm(plus.corr ~ biomass.plus)
-plot(biomass.plus, plus.corr)
-abline(fit2)
-```
-
-
-## 6) Correcting data and regressions with means
 ```{r}
+summary.out <- matrix(data = NA, length(unique(strains)), 4)
+row.names(summary.out) <- c("K1", "K2", "K3", "F1", "F2", "B1", "K4", "K5", "K6", "EC")
+colnames(summary.out) <- c("mean.dead", "sem.dead", "mean.live", "sem.live")
+sem <- function(x) sqrt(var(x)/length(x))
 
-plus.mean <- aggregate(plus$Fluor, list(plus$Strain), FUN=mean, na.rm=TRUE)
-cont.mean <- aggregate(minus$Fluor, list(minus$Strain), FUN=mean, na.rm =TRUE)
-corr.mean <- plus.mean[,2]-cont.mean[,2]
+for(i in levels(data.corr$strains)) {
+  tmp = data.corr[data.corr$strains == i,]  
+      test = c(mean(tmp$kill.corr), sem(tmp$kill.corr), mean(tmp$plus.corr), sem(tmp$plus.corr))
+  summary.out[i, "mean.dead"] <- test[1]
+  summary.out[i, "sem.dead"] <- test[2]
+  summary.out[i, "mean.live"] <- test[3]
+  summary.out[i, "sem.live"] <- test[4]
+  }
 
-biomass.minus.mean <- aggregate(minus$Abs, list(minus$Strain), FUN=mean, na.rm =TRUE)
-biomass.plus.mean <- aggregate(plus$Abs, list(plus$Strain), FUN=mean, na.rm =TRUE)
+x.dead <- c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225)
+x.live <- x.dead 
 
-# biomass via absorbance (minus CTC)
-fit3 <- lm(corr.mean ~ biomass.minus.mean[,2])
-plot(biomass.minus.mean[,2], corr.mean)
-abline(fit3)
+plot.new()
+plot(x.dead, summary.out[,1], type = "p", pch = 22, bg = "white", col = "black", 
+     las = 1, xlim = c(-20, 250), ylim = c(-500, 60000), cex = 2, yaxt = "n", 
+     cex.lab = 2, cex.axis = 1.5, ylab = "", xlab = "", yaxt = "n", xaxt = "n",
+     lwd = 2,
+     panel.first={
+       arrows(x0 = x.dead, y0 = summary.out[,1], y1 = summary.out[,1] - summary.out[,2], angle = 90, 
+       length = 0.05, lwd = 2)
+       arrows(x0 = x.dead, y0 = summary.out[,1], y1 = summary.out[,1] + summary.out[,2], angle = 90, 
+       length = 0.05, lwd = 2)
+})  
+     
 
-# biomass via absorbance (plus CTC)
-fit4 <- lm(corr.mean ~ biomass.plus.mean[,2])
-plot(biomass.plus.mean[,2], corr.mean)
-abline(fit4)
 
-## 4) Run t-test by strain
-strains <- unique(ctc$Strain)
-strains <- rep(strains, each = 3)
-reps <- rep(seq(1,3), 10)
-data <- cbind(as.data.frame(strains), reps, kill.corr, plus.corr)
+points(x.live, summary.out[,3], type = "p", pch = 22, bg = "black", 
+       col = "black", cex = 2,
 
-apply(data,1,)
+  panel.first={
+       arrows(x0 = x.dead, y0 = summary.out[,3], y1 = summary.out[,3] - summary.out[,4], angle = 90, 
+       length = 0.05, lwd = 2)
+       arrows(x0 = x.dead, y0 = summary.out[,3], y1 = summary.out[,3] + summary.out[,4], angle = 90, 
+       length = 0.05, lwd = 2)
+})  
+
+# Major Axes
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.5, las = 1,
+    labels = c(0, 25000, 50000), at = c(0, 25000, 60000))
+ 
+axis(side = 4, lwd.ticks = 2, cex.axis = 1.5, las = 1,
+    at=c(0, 25000, 50000), labels = F)
+ 
+axis(side = 1, lwd.ticks = 2, cex.axis = 1, las = 1,
+    labels = c("K1", "K2", "K3", "F1", "F2", "B1", "K4", "K5", "K6", "EC"), 
+    at = c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225))
+
+axis(side = 3, lwd.ticks = 2, cex.axis = 1.5, las = 1,
+    at = c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225), labels = F)
+
+box(lwd = 2)
+```
 

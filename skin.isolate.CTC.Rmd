@@ -102,6 +102,11 @@ for(i in levels(data.corr$strains)) {
   summary.out[i, "sem.live"] <- test[4]
   }
 
+# Fold differences
+fold.out <- summary.out[,3] / summary.out[,1]
+mean.fold.out <- mean(fold.out)
+sem.fold.out <- sem(fold.out)
+
 x.dead <- c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225)
 x.live <- x.dead 
 

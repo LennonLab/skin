@@ -27,37 +27,63 @@ require("vegan")
 ### A. Load data
 ```{r}
 # Load raw data
-hab <- read.table("skin.habitat.txt", sep = "\t", header = TRUE)
+hab <- read.table("data/skin.habitat.txt", sep = "\t", header = TRUE)
 
 # Look at raw data structure
 str(hab)
 ```
 
-### B. Calculate percentages of each metabolic class
+### B. Caculate total bacterial abundances
+```{r}
+# Area sampled (centimeters squared) per subject
+area.cm2 <- 6.4516 
+
+# Need volume of solution for each sample (mL)
+
+# Need volume of subsample that went onto filer (mL)
+
+# Inside radius of filter tower (cm)
+tow.rad <- 0.75
+
+# Area of filter
+filter.area <- pi * (tow.rad)^2
+
+# Dimensions of field (cm)
+field.width <- 0.00445
+field.height <- 0.00335
+field.cm2 <- field.width * field.height
+fields.filter <- filter.area / field.cm2
+
+# multiply counts by field per filter = cells per filter
+# divide cells per filter by volume of sample filtered (uL) and multipl by 1000 to get mL
+```
+
+### C. Calculate percentages of each metabolic class
 ```{r}
 # Percent active, dead, and dormanc
 act.per <- hab$active/hab$total
 dead.per <- hab$dead/hab$total  
 dorm.per <- hab$dormant/hab$total
+inact.per <- (hab$dead + hab$dormant) / hab$total
 
 # Make new dataframe with percent metabolic class data
-hab.per <- data.frame(hab[1:2], act.per, dorm.per, dead.per)
+hab.per <- data.frame(hab[1:2], act.per, dorm.per, dead.per, inact.per)
 ```
 
-### C. Make a summary table for metabolic classes by habitat
+### D. Make a summary table for metabolic classes by habitat
 ```{r}
 sem <- function(x){
   sd(x)/sqrt(length(x))
   }
 
-table <- aggregate(hab.per[, c("act.per", "dead.per", "dorm.per")], 
+table <- aggregate(hab.per[, c("act.per", "dead.per", "dorm.per", "inact.per")], 
             by = list(hab.per$habitat), function(x) c(mean=mean(x), sem=sem(x)))
-colnames(table) <- c("habitat", "active", "dead","dormant")
+colnames(table) <- c("habitat", "active", "dead","dormant", "inact.per")
 
 print(table)
 ```
 
-### D. Make stacked bar chart for each subject and differen habitats
+### E. Make stacked bar chart for each subject and differen habitats
 ```{r}
 back <- subset(hab.per, habitat == "back")
 back.sub <- t(back[,c(5,4,3)])
@@ -111,26 +137,7 @@ legend("center", c("Active","Dormant","Dead"), pt.lwd = 2, col = "black",
       ncol = 3, cex = 2, pt.cex = 5)
 ```
 
-### E. SINGLE ANOVAs: do habitats vary in classes of activity?
-```{r}
-# Make a factor table for habitats
-hab.type <- hab.per$habitat
-
-# ANOVA for active "are "
-anova.act <- aov(act.per ~ hab.type)
-summary(anova.act)
-TukeyHSD(anova.act)
-
-anova.dorm <- aov(dorm.per ~ hab.type)
-summary(anova.dorm)
-TukeyHSD(anova.dorm)
-
-anova.dead <- aov(dead.per ~ hab.type)
-summary(anova.dead)
-TukeyHSD(anova.dead)
-```
-
-### C. Test for differences among habitats using PERMANOVA
+### F. Test for differences among habitats using PERMANOVA
 ```{r}
 # Subset activity data
 hab.per.cell <- hab.per[,3:5]
@@ -185,41 +192,6 @@ tan <- as.factor(ages$tan)
 etoh <- as.factor(ages$etoh)
 ```
 
-### C. Reduce hygiene data using PCoA (needs to be revisited)
-```{r}
-show.dat <- ages[,8:10]
-show.dist <- vegdist(show.dat, method = "bray")
-show.pcoa <- cmdscale(show.dist, eig = TRUE, k = 2) 
-
-explainvar1 <- round(show.pcoa$eig[1] / sum(show.pcoa$eig), 3) * 100
-explainvar2 <- round(show.pcoa$eig[2] / sum(show.pcoa$eig), 3) * 100
-explainvar3 <- round(show.pcoa$eig[3] / sum(show.pcoa$eig), 3) * 100
-sum.eig <- sum(explainvar1, explainvar2, explainvar3)
-
-# Define Plot Parameters
-par(mar = c(5, 5, 1, 2) + 0.1)
-
-# Initiate Plot
-plot(show.pcoa$points[ ,1], show.pcoa$points[ ,2], ylim = c(-1, 1),
-     xlab = paste("PCoA 1 (", explainvar1, "%)", sep = ""),
-     ylab = paste("PCoA 2 (", explainvar2, "%)", sep = ""),
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
-
-# Add Axes
-axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-abline(h = 0, v = 0, lty = 3)
-box(lwd = 2)
-
-# Add Points & Labels
-points(show.pcoa$points[ ,1], show.pcoa$points[ ,2],
-       pch = 19, cex = 3, bg = "gray", col = "gray")
-text(show.pcoa$points[ ,1], show.pcoa$points[ ,2], 
-     labels = row.names(show.pcoa$points))
-PC1 <- show.pcoa$points[,1]
-PC2 <- show.pcoa$points[,2]
-```
-
 ### D. Calculate percent activity
 # Percent active, dead, and dormanc
 ```{r}
@@ -262,16 +234,3 @@ conf95 <- predict(fit, newdata = data.frame(age = newage),
 conf95 <- 10^(conf95)
 matlines(newage, conf95[, c("lwr", "upr")], type="l", lty = 2, lwd = 2, col = "black")
 ```
-
-# From here on, just initial try at multiple regression. 
-fit <- lm(log10(act.p) ~ age + gender + last.show + show.freq + show.leng + pet + anti + ecze + alle + tan + etoh, data = ages)
-
-# Package for multiple correspondence analysis (MCA)
-require(glmulti)
-continuous.pred <- data.frame(ages$age, PC1)
-scaled <- scale(continuous.pred)
-scaled <- as.dataframe(scaled)
-fit2 <- lm(log10(act.p) ~ ages.age + PC1, data = scaled)
-
-#glmulti <- glmulti((log10(act.p) ~ -1 + ages$age + gender + last.show + show.freq + show.leng + anti + ecze + pet + alle + tan + etoh))
-glmulti <- glmulti((log10(act.p) ~ -1 + ages$age + show.freq))

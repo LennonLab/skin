@@ -38,24 +38,47 @@ str(hab)
 # Area sampled (centimeters squared) per subject
 area.cm2 <- 6.4516 
 
-# Need volume of solution for each sample (mL)
+# Sample volume containg skin bacteria (mL)
+samp.vol <- 5
 
-# Need volume of subsample that went onto filer (mL)
+# Subsample volume that went onto filer (mL)
+sub.vol <- 1.5
 
-# Inside radius of filter tower (cm)
-tow.rad <- 0.75
+# Inside diameter (diam) and radius (rad) of filter tower (cm)
+tow.diam <- 1.64
+tow.rad <- tow.diam / 2
 
 # Area of filter
 filter.area <- pi * (tow.rad)^2
 
-# Dimensions of field (cm)
-field.width <- 0.00445
-field.height <- 0.00335
+# Dimensions of field (cm) with 40x objective
+field.width <- 0.0215
+field.height <- 0.0160
 field.cm2 <- field.width * field.height
 fields.filter <- filter.area / field.cm2
 
-# multiply counts by field per filter = cells per filter
-# divide cells per filter by volume of sample filtered (uL) and multipl by 1000 to get mL
+# Bacterial cells per filter
+cell.filter <- hab$total * fields.filter
+
+# Bacterial densities (cm^-2)
+cell.cm2 <- ((cell.filter * samp.vol) / sub.vol) / area.cm2
+
+# Merge with habitat matrix
+hab <- cbind(hab, cell.cm2)
+
+# Minimum and maximum density of cells (cm^-2)
+min(hab$cell.cm2)
+max(hab$cell.cm2)
+
+# Make table of total abundances
+sem <- function(x){
+  sd(x)/sqrt(length(x))
+  }
+
+table.abund <- aggregate(hab[, c("cell.cm2")], 
+            by = list(hab$habitat), function(x) c(mean=mean(x), sem=sem(x)))
+
+format(table.abund[,1:2], scientific = TRUE)
 ```
 
 ### C. Calculate percentages of each metabolic class
@@ -72,9 +95,7 @@ hab.per <- data.frame(hab[1:2], act.per, dorm.per, dead.per, inact.per)
 
 ### D. Make a summary table for metabolic classes by habitat
 ```{r}
-sem <- function(x){
-  sd(x)/sqrt(length(x))
-  }
+
 
 table <- aggregate(hab.per[, c("act.per", "dead.per", "dorm.per", "inact.per")], 
             by = list(hab.per$habitat), function(x) c(mean=mean(x), sem=sem(x)))

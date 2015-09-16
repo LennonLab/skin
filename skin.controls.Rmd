@@ -16,6 +16,14 @@ getwd()
 setwd("~/GitHub/skin")
 ```
 
+### 2) E. coli control
+```{r}
+ec.kill <- c(17, 685, 3700) # active, dormant, dead
+ec.kill.rel <- ec.kill / sum(ec.kill) * 100
+
+ec.live <- c(2256, 455, 287)  # active, dormant, dead
+ec.live.rel <- ec.live / sum(ec.live) * 100
+
 ## 2) Load data
 ```{r}
 # Load raw data

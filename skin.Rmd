@@ -84,10 +84,10 @@ format(table.abund[,1:2], scientific = TRUE)
 ### C. Calculate percentages of each metabolic class
 ```{r}
 # Percent active, dead, and dormanc
-act.per <- hab$active/hab$total
-dead.per <- hab$dead/hab$total  
-dorm.per <- hab$dormant/hab$total
-inact.per <- (hab$dead + hab$dormant) / hab$total
+act.per <- hab$active/hab$total *100
+dead.per <- hab$dead/hab$total *100
+dorm.per <- hab$dormant/hab$total *100
+inact.per <- (hab$dead + hab$dormant) / hab$total *100
 
 # Make new dataframe with percent metabolic class data
 hab.per <- data.frame(hab[1:2], act.per, dorm.per, dead.per, inact.per)
@@ -95,8 +95,6 @@ hab.per <- data.frame(hab[1:2], act.per, dorm.per, dead.per, inact.per)
 
 ### D. Make a summary table for metabolic classes by habitat
 ```{r}
-
-
 table <- aggregate(hab.per[, c("act.per", "dead.per", "dorm.per", "inact.per")], 
             by = list(hab.per$habitat), function(x) c(mean=mean(x), sem=sem(x)))
 colnames(table) <- c("habitat", "active", "dead","dormant", "inact.per")

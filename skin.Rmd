@@ -81,15 +81,15 @@ table.abund <- aggregate(hab[, c("cell.cm2")],
 format(table.abund[,1:2], scientific = TRUE)
 ```
 
-### C. Calculate percentages of each metabolic class
+### C. Calculate proportions of each metabolic class
 ```{r}
 # Percent active, dead, and dormanc
-act.per <- hab$active/hab$total *100
-dead.per <- hab$dead/hab$total *100
-dorm.per <- hab$dormant/hab$total *100
-inact.per <- (hab$dead + hab$dormant) / hab$total *100
+act.per <- hab$active/hab$total
+dead.per <- hab$dead/hab$total 
+dorm.per <- hab$dormant/hab$total 
+inact.per <- (hab$dead + hab$dormant) / hab$total 
 
-# Make new dataframe with percent metabolic class data
+# Make new dataframe with proportion metabolic class data
 hab.per <- data.frame(hab[1:2], act.per, dorm.per, dead.per, inact.per)
 ```
 
@@ -102,8 +102,11 @@ colnames(table) <- c("habitat", "active", "dead","dormant", "inact.per")
 print(table)
 ```
 
-### E. Make stacked bar chart for each subject and differen habitats
+### E. Make stacked bar chart for each subject and different habitats
 ```{r}
+png(filename="~/GitHub/skin/figures/habitat.fig.png",
+    width = 1200, height = 1200, res = 96*2)
+
 back <- subset(hab.per, habitat == "back")
 back.sub <- t(back[,c(5,4,3)])
 colnames(back.sub) <- 1:10
@@ -154,6 +157,9 @@ plot.new()
 legend("center", c("Active","Dormant","Dead"), pt.lwd = 2, col = "black", 
       pt.bg = c("yellow","red", "darkblue"), pch = c(22, 22, 22), bty='n',
       ncol = 3, cex = 2, pt.cex = 5)
+
+dev.off() # this writes plot to folder
+graphics.off() # shuts down open devices
 ```
 
 ### F. Test for differences among habitats using PERMANOVA
@@ -172,7 +178,7 @@ adonis(hab.per.cell ~ hab.type, method = "bray", permutations = 999, strata = su
 ### A. Load data
 ```{r}
 # Load raw data
-ages.raw <- read.table("skin.age.txt", sep = "\t", header = TRUE)
+ages.raw <- read.table("data/skin.age.txt", sep = "\t", header = TRUE)
 
 # Remove potential outlier
 ages <- ages.raw[ ! ages.raw$subject == "G1", ]
@@ -194,7 +200,7 @@ str(ages)
            #2 = 5-15 mins
            #3 = more than 15 mins
 # JTL modified the the scale of the original data so that higher numbers
-# euate with "more" hygiene
+# equate with "more" hygiene
 ```
 
 ### B. Create factors
@@ -209,6 +215,26 @@ ecze <- as.factor(ages$ecze)
 alle <- as.factor(ages$alle)
 tan <- as.factor(ages$tan)
 etoh <- as.factor(ages$etoh)
+```
+
+### C. Cacluate abundances
+```{r}
+# Bacterial cells per filter
+cell.filter.ages <- ages$total * fields.filter
+
+# Bacterial densities (cm^-2)
+cell.cm2.ages <- ((cell.filter.ages * samp.vol) / sub.vol) / area.cm2
+
+# Merge with habitat matrix
+ages <- cbind(ages, cell.cm2.ages)
+names(ages)[names(ages)=="cell.cm2.ages"] <- "cell.cm2"
+
+# Minimum and maximum density of cells (cm^-2)
+min(ages$cell.cm2)
+max(ages$cell.cm2)
+
+# Write table
+write.table(ages, "data/skin.ages.out.txt", sep="\t") 
 ```
 
 ### D. Calculate percent activity

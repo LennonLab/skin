@@ -1,6 +1,6 @@
 ---
 title: "Skin Microbiome"
-author: "Honors Thesis Student: Sarah Cummins; Advisor: Jay Lennon"
+author: "Jay T. Lennon"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 header-includes:
    - \usepackage{array}
@@ -27,6 +27,7 @@ require("vegan")
 ### A. Load data
 ```{r}
 # Load raw data
+setwd("~/GitHub/skin")
 hab <- read.table("data/skin.habitat.txt", sep = "\t", header = TRUE)
 
 # Look at raw data structure
@@ -84,38 +85,38 @@ format(table.abund[,1:2], scientific = TRUE)
 ### C. Calculate proportions of each metabolic class
 ```{r}
 # Percent active, dead, and dormanc
-act.per <- hab$active/hab$total
-dead.per <- hab$dead/hab$total 
-dorm.per <- hab$dormant/hab$total 
-inact.per <- (hab$dead + hab$dormant) / hab$total 
+act.prop <- hab$active/hab$total
+dead.prop <- hab$dead/hab$total 
+dorm.prop <- hab$dormant/hab$total 
+inact.prop <- (hab$dead + hab$dormant) / hab$total 
 
 # Make new dataframe with proportion metabolic class data
-hab.per <- data.frame(hab[1:2], act.per, dorm.per, dead.per, inact.per)
+hab.prop <- data.frame(hab[1:2], act.prop, dorm.prop, dead.prop, inact.prop)
 ```
 
 ### D. Make a summary table for metabolic classes by habitat
 ```{r}
-table <- aggregate(hab.per[, c("act.per", "dead.per", "dorm.per", "inact.per")], 
-            by = list(hab.per$habitat), function(x) c(mean=mean(x), sem=sem(x)))
-colnames(table) <- c("habitat", "active", "dead","dormant", "inact.per")
+table <- aggregate(hab.prop[, c("act.prop", "dead.prop", "dorm.prop", "inact.prop")], 
+            by = list(hab.prop$habitat), function(x) c(mean=mean(x), sem=sem(x)))
+colnames(table) <- c("habitat", "active", "dead","dormant", "inact.prop")
 
 print(table)
 ```
 
 ### E. Make stacked bar chart for each subject and different habitats
 ```{r}
-png(filename="~/GitHub/skin/figures/habitat.fig.png",
+png(filename="~/GitHub/skin/figures/skin.habitats.png",
     width = 1200, height = 1200, res = 96*2)
 
-back <- subset(hab.per, habitat == "back")
+back <- subset(hab.prop, habitat == "back")
 back.sub <- t(back[,c(5,4,3)])
 colnames(back.sub) <- 1:10
 
-arm <- subset(hab.per, habitat == "arm")
+arm <- subset(hab.prop, habitat == "arm")
 arm.sub <- t(arm[,c(5,4,3)])
 colnames(arm.sub) <- 1:10
 
-knee <- subset(hab.per, habitat == "knee")
+knee <- subset(hab.prop, habitat == "knee")
 knee.sub <- t(knee[,c(5,4,3)])
 colnames(knee.sub) <- 1:10
 
@@ -154,9 +155,10 @@ mtext("Knee", side = 4, las = 1, cex = 1.5, adj = 0, line = -1)
 
 par(mar=c(0, 9, 0, 0))
 plot.new()
-legend("center", c("Active","Dormant","Dead"), pt.lwd = 2, col = "black", 
+
+legend(0, 1, c("Active","Dormant","Dead"), pt.lwd = 2, col = "black", 
       pt.bg = c("yellow","red", "darkblue"), pch = c(22, 22, 22), bty='n',
-      ncol = 3, cex = 2, pt.cex = 5)
+      ncol = 3, cex = 2, pt.cex = 5, xjust = 0)
 
 dev.off() # this writes plot to folder
 graphics.off() # shuts down open devices
@@ -165,12 +167,12 @@ graphics.off() # shuts down open devices
 ### F. Test for differences among habitats using PERMANOVA
 ```{r}
 # Subset activity data
-hab.per.cell <- hab.per[,3:5]
-hab.type <- hab.per$habitat
-subjects <- hab.per$subject
+hab.prop.cell <- hab.prop[,3:5]
+hab.type <- hab.prop$habitat
+subjects <- hab.prop$subject
 
 # Run PERMANOVA with adonis function blocking by subject
-adonis(hab.per.cell ~ hab.type, method = "bray", permutations = 999, strata = subjects) 
+adonis(hab.prop.cell ~ hab.type, method = "bray", permutations = 999, strata = subjects) 
 ```
 
 ## 3) ANALYSIS OF DIFFERENT AGES
@@ -178,6 +180,7 @@ adonis(hab.per.cell ~ hab.type, method = "bray", permutations = 999, strata = su
 ### A. Load data
 ```{r}
 # Load raw data
+setwd("~/GitHub/skin")
 ages.raw <- read.table("data/skin.age.txt", sep = "\t", header = TRUE)
 
 # Remove potential outlier

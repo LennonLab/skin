@@ -29,10 +29,28 @@ setwd("~/GitHub/skin")
 # Load raw data
 ages.raw <- read.table("data/skin.age.txt", sep = "\t", header = TRUE)
 
+# Caculate total bacterial abundances
+area.cm2 <- 6.4516  # Area sampled (cm^2) per subject
+samp.vol <- 5 # Sample volume containg skin bacteria (mL)
+sub.vol <- 1.5 # Subsample volume that went onto filer (mL)
+tow.diam <- 1.64 # Inside diameter (diam) and radius (rad) of filter tower (cm)
+tow.rad <- tow.diam / 2 # Tower radiaus (cm)
+filter.area <- pi * (tow.rad)^2 # Area of filter
+field.width <- 0.0215 # Width of field (cm) with 40x objective
+field.height <- 0.0160 # Height of field (cm) with 40x objective
+field.cm2 <- field.width * field.height # Field area
+fields.filter <- filter.area / field.cm2 # Number of fiels per filter
+cell.filter <- ages.raw[,3:6] * fields.filter # Bacterial cells per filter
+cell.cm2 <- ((cell.filter * samp.vol) / sub.vol) / area.cm2 # Bacterial density (cm^-2)
+
+# New data frame with cell densities expresssed per cm^2 of skin
+ages.counts <- data.frame(ages.raw[,1:2],cell.cm2, ages.raw[,7:ncol(ages.raw)])
+
+# Export data to table
+write.table(ages.counts, "~/GitHub/skin/data/skin.age.counts.txt", sep="\t") 
+
 # Remove subject "G1"
 ages <- ages.raw[ ! ages.raw$subject == "G1", ]
-
-# Convert cell counts to cell/cm2 here
 ```
 
 ### C. Make dummy variables and design matrix

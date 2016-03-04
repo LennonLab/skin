@@ -30,8 +30,11 @@ require("vegan")
 setwd("~/GitHub/skin")
 hab <- read.table("data/skin.habitat.txt", sep = "\t", header = TRUE)
 
+hab$gender <- ifelse(hab$gender == "1", "male", "female")
+
 # Look at raw data structure
 str(hab)
+
 ```
 
 ### B. Caculate total bacterial abundances
@@ -91,16 +94,22 @@ dorm.prop <- hab$dormant/hab$total
 inact.prop <- (hab$dead + hab$dormant) / hab$total 
 
 # Make new dataframe with proportion metabolic class data
-hab.prop <- data.frame(hab[1:2], act.prop, dorm.prop, dead.prop, inact.prop)
+hab.prop <- data.frame(hab[1:2], hab$gender, act.prop, dorm.prop, dead.prop, inact.prop)
 ```
 
 ### D. Make a summary table for metabolic classes by habitat
 ```{r}
-table <- aggregate(hab.prop[, c("act.prop", "dead.prop", "dorm.prop", "inact.prop")], 
+table.hab <- aggregate(hab.prop[, c("act.prop", "dead.prop", "dorm.prop", "inact.prop")], 
             by = list(hab.prop$habitat), function(x) c(mean=mean(x), sem=sem(x)))
+colnames(table.hab) <- c("habitat", "active", "dead","dormant", "inact.prop")
+
+print(table.hab)
+
+table.gend <- aggregate(hab.prop[, c("act.prop", "dead.prop", "dorm.prop", "inact.prop")], 
+            by = list(hab.prop$hab.gender), function(x) c(mean=mean(x), sem=sem(x)))
 colnames(table) <- c("habitat", "active", "dead","dormant", "inact.prop")
 
-print(table)
+print(table.gend)
 ```
 
 ### E. Make stacked bar chart for each subject and different habitats
@@ -167,12 +176,18 @@ graphics.off() # shuts down open devices
 ### F. Test for differences among habitats using PERMANOVA
 ```{r}
 # Subset activity data
-hab.prop.cell <- hab.prop[,3:5]
+hab.prop.cell <- hab.prop[,4:6]
 hab.type <- hab.prop$habitat
+hab.gend <- hab.prop$hab.gender
 subjects <- hab.prop$subject
 
 # Run PERMANOVA with adonis function blocking by subject
-adonis(hab.prop.cell ~ hab.type, method = "bray", permutations = 999, strata = subjects) 
+adonis(hab.prop.cell ~ hab.type, method = "bray", permutations = 999, 
+       strata = subjects) 
+
+# Run PERMANOVA with adonis function blocking by subject with gender
+adonis(hab.prop.cell ~ hab.type + hab.gend + hab.type * hab.gend, 
+       method = "bray", permutations = 999, strata = subjects) 
 ```
 
 ## 3) ANALYSIS OF DIFFERENT AGES

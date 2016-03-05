@@ -30,11 +30,8 @@ require("vegan")
 setwd("~/GitHub/skin")
 hab <- read.table("data/skin.habitat.txt", sep = "\t", header = TRUE)
 
-hab$gender <- ifelse(hab$gender == "1", "male", "female")
-
 # Look at raw data structure
 str(hab)
-
 ```
 
 ### B. Caculate total bacterial abundances

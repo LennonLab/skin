@@ -1,147 +1,85 @@
----
-  title: "Skin Metabolic Activity"
-author: "Don Schoolmaster"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-header-includes:
-  - \usepackage{array}
-output: pdf_document
-geometry: margin=2.54cm
----
-
-# Set working directory
-```{r}
-rm(list=ls())
-getwd()
-setwd("~/GitHub/skin")
-```
-
-# Read in data 
-```{r}
-# ages.raw <- read.table("data/skin.age.txt", sep = "\t", header = TRUE)
-ages.raw.count <- read.table("data/skin.age.counts.txt", sep = "\t", header = T)
-
+###############################################################
+####This is the new anaysis based on the analysis details.pdf
+###############################################################
+setwd("~/Documents/Work/LennonSkin/skin/")
+#read in data 
+ages.raw <- read.table("skin.age.txt", sep = "\t", header = TRUE)
 #remove subject "G1"
-ages <- ages.raw.count[ ! ages.raw.count$subject == "G1", ]
-```
-
-# Create dummy variables for multinomial variables
-```{r}
+ages <- ages.raw[ ! ages.raw$subject == "G1", ]
+#create dummy variables for multinomial variables
 #shower frequency
-show.f2 <- ifelse(ages$show.freq==2,1,0)
-show.f3 <- ifelse(ages$show.freq==3,1,0)
-
+show.f2<-ifelse(ages$show.freq==2,1,0)
+show.f3<-ifelse(ages$show.freq==3,1,0)
 #shower length
-show.l2 <- ifelse(ages$show.leng==2,1,0)
-show.l3 <- ifelse(ages$show.leng==3,1,0)
-
+show.l2<-ifelse(ages$show.leng==2,1,0)
+show.l3<-ifelse(ages$show.leng==3,1,0)
 #last shower
-show.last2 <- ifelse(ages$last.show==2,1,0)
-show.last3 <- ifelse(ages$last.show==3,1,0)
-
+show.last2<-ifelse(ages$last.show==2,1,0)
+show.last3<-ifelse(ages$last.show==3,1,0)
 #create new data.frame with all goodies.
-ages.2 <- data.frame(ages[,c(1:6,11:16)], show.f2,show.f3,show.l2, 
-                     show.l3,show.last2,show.last3)
-
+ages.2<-data.frame(ages[,c(1:6,11:16)],show.f2,show.f3,show.l2,show.l3,show.last2,show.last3)
 #set up a design matrix that we might use later
-X <- data.frame(ages.2[,-c(1,3:5)])
-
-#center age for later interpretation
+X<-data.frame(ages.2[,-c(1,3:5)])
+#center age for later interp
 mean(ages$age)
-X$age <- X$age-mean(X$age)
-```
+X$age<-X$age-mean(X$age)
 
-# Look at raw correlations
-```{r}
+####look at raw correlations####
 cor(ages.2[,c(3,4,5)]/ages.2$total)
-# this upholds idea that cells are usually in an active or dormant state
-# and that dormant cells are more likely to die
+#this uphold our idea that all cells are usually in an active or dormant state
+#and that dormant cells are more likely to die
 
-# JTL makes correlation figures here
-```
-
-# Perform SEM
-*** Getting non-integer warnings ***
-```{r}
+####Do the analysis####
 #Active
 summary(f.act<-glm.nb(ages$active~.+offset(log(X$total)),data=X[,-2]))
-
 #Dormant
 summary(f.dor<-glm.nb(ages$dormant~.+offset(log(X$total)),data=X[,-2]))
-
 #Dead
 summary(f.ded<-glm.nb(ages$dead~.+offset(log(X$total)),data=X[,-2]))
-
 #Total
 summary(f.tot<-glm.nb(ages$total~.,data=X[,-2],maxit=1000))
-```
-
-# Predicted proportions in metabolic categories for "average" individual
-```{r}
-# mean age and reference state for all categorical variables
+#look at the predicted prop in category for an individual of mean age and reference 
+#state for all categorical variables
+#this should be very close to 1
 (exp(c(coef(f.act)[1],coef(f.dor)[1],coef(f.ded)[1])))
-
-# Check: proportions should sum to ~1
 sum((exp(c(coef(f.act)[1],coef(f.dor)[1],coef(f.ded)[1]))))
-```
 
-# Which variables are significantly affect metabolic classes?
-*** how do we interpret e.g., show.l2 vs. show.l3? ***
-```{r}
+####look at which variables are significant####
 #Active
-act.n <- rownames(summary(f.act)$coef)[which(summary(f.act)$coef[,4]<0.05)] 
-act.p <- summary(f.act)$coef[which(summary(f.act)$coef[,4]<0.05)] 
-t(data.frame(act.n, act.p))
-
+rownames(summary(f.act)$coef)[which(summary(f.act)$coef[,4]<0.05)]
 #Dormant
-dor.n <- rownames(summary(f.dor)$coef)[which(summary(f.dor)$coef[,4]<0.05)]
-dor.p <-summary(f.dor)$coef[which(summary(f.dor)$coef[,4]<0.05)]
-t(data.frame(dor.n,dor.p))
-
+rownames(summary(f.dor)$coef)[which(summary(f.dor)$coef[,4]<0.05)]
 #Dead
-ded.n <- rownames(summary(f.ded)$coef)[which(summary(f.ded)$coef[,4]<0.05)] 
-ded.p <-summary(f.ded)$coef[which(summary(f.ded)$coef[,4]<0.05)]
-t(data.frame(ded.n,ded.p))
-
+rownames(summary(f.ded)$coef)[which(summary(f.ded)$coef[,4]<0.05)]
 #Total
-tot.n <- rownames(summary(f.tot)$coef)[which(summary(f.tot)$coef[,4]<0.05)] 
-tot.p <- summary(f.tot)$coef[which(summary(f.tot)$coef[,4]<0.05)] # parms
-t(data.frame(tot.n,tot.p))
+rownames(summary(f.tot)$coef)[which(summary(f.tot)$coef[,4]<0.05)]
+summary(f.tot)$coef[which(summary(f.tot)$coef[,4]<0.05)]
+#age and shower length both significantly reduce cells and affect distribution of cells
+#eczema increases total cell number but it does not affect the distribution across metabolic classes
 
-# age and shower length both reduce cells and affect distribution of cells
-# eczema increases total but does not affect the distribution across metabolic classes
-```
-
-# Identify potential dormancy cues: look at coefs of factors that are of one sign for active and dead and the opposite sign for dormancy
-```{r}
-# Make matrix of coefficiencts
-coef.matrix <- rbind(coef(f.act),coef(f.dor),coef(f.ded))
+##look at coef: factors that are of one sign for active and dead and the opposite for
+##dormancy are the potential dormance cues
+coef.matrix<-rbind(coef(f.act),coef(f.dor),coef(f.ded))
 rownames(coef.matrix)<-c('active','dormant','dead')
-
-# Consider variables that were significant above
-coef.matrix[,"age"] #age is dormancy inducing mechanism (and reduces total cell number)
-coef.matrix[,"show.f3"] #show frequncy is a dormancy reducing mechanism
-coef.matrix[,"show.l3"] #show length is not a dormancy mechanism, but 
+coef.matrix
+coef.matrix[,"age"]#age is a dormancy inducing mechanism (and reduces total cell number)
+coef.matrix[,"show.f3"]#show frequncy is a dormancy reducing mechanism
+coef.matrix[,"show.l3"]#show length is not a dormancy mechanism, but 
 #works to preferentially remove dead cells--this interp is supported by the 
 #significant effects on total cell count see detail below
 
-# ***What about ecze, show.l2???***
+#Notice that shower freq and last show should be on average inversly related and the 
+#coefs show that they tell the same story shower freq tends to reduce dormancy
+#so, the longer its been since showering the higher proportion is in the dormant category
 
-# Notice that shower freq and last show should be on average inversely related and the 
-# coefs show that they tell the same story shower freq tends to reduce dormancy
-# so, the longer its been since showering the higher proportion is in the dormant category
-```
-
-# look at the distibution of cells into each metabolic category of a subject of average age
-# and all other factors set to lowest (reference) level
-# ***Not sure I understand what this does for us***
-```{r}
-exp(coef(f.tot)[1]) # total cell numbers
-exp(coef.matrix[,1]) # almost all cells are in dead category
-```
-
+#look at the distibution of cells into each metabolic category of a subject of average age
+#and all other factors set to lowest (reference) level
+exp(coef(f.tot)[1])#total cell numbers
+exp(coef.matrix[,1]) #almost all cells are in dead category
 #remember there is some error which is why the proportions don't sum to exactly 1
 
-#look at the effect of long showers, it reduces the total number of cells A LOT, disproportionately at the expence of dead ones
+#look at the effect of long showers, it reduces the total number of cells A LOT, disproportionately 
+#at the expence of dead ones
 exp(coef(f.tot)[1])*exp(coef(f.tot)["show.l3"])
 exp(coef.matrix[,1])*exp(coef.matrix[,"show.l3"])
 #thus result of long showers is fewer total cells and a smaller proportion of them
@@ -149,7 +87,7 @@ exp(coef.matrix[,1])*exp(coef.matrix[,"show.l3"])
 
 #eczema has a large effect on the total number of cells, but each metabolic category seems 
 #to be affected proportionaltely
-exp(coef(f.tot)[1]) #total cell numbers
+exp(coef(f.tot)[1])#total cell numbers
 exp(coef.matrix[,1]) #almost all cells are in dead category
 
 exp(coef(f.tot)[1])*exp(coef(f.tot)["ecze"])
@@ -160,9 +98,6 @@ pairs(data.frame(active=resid(f.act),dormant=resid(f.dor),dead=resid(f.ded)))
 cor(data.frame(active=resid(f.act),dormant=resid(f.dor),dead=resid(f.ded)))
 ##The strong residual correlations suggests that we are missing some
 ##major cues the cells are using to determine activity
-
-.......................
-
 
 ####fit the rest of the SEM
 #set up list for results

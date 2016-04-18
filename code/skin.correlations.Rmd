@@ -1,0 +1,279 @@
+---
+title: "Skin Metabolic Activity"
+author: "Donald R. Schoolmaster Jr. and Jay T. Lennon"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+  - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+# Set working directory and load packages
+```{r}
+rm(list=ls())
+getwd()
+setwd("~/GitHub/skin")
+require("psych")
+require("rgl")
+require("scatterplot3d")
+require("ggtern")
+```
+
+# Read in data 
+```{r}
+ # Read in raw data
+ages.raw.count <- read.table("data/skin.age.counts.txt", sep = "\t", header = T)
+
+# Remove subject "G1"
+ages <- ages.raw.count[ ! ages.raw.count$subject == "G1", ]
+
+# Stadnardize active, dormant, and dead by total abundance
+ages.st <- data.frame(ages[,1:2], ages[,3:5]/ages[,6], ages[,6:16])
+```
+
+# Look at correlations
+```{r}
+cor <- corr.test(ages.st[,3:5], method = "pearson", adjust = "none")
+print(cor, digits = 3)
+
+dorm.act.p <- ifelse(cor$p[3] == 0, '< 0.0001', round(cor$p[3], digits = 3))
+dorm.act.r <- round(cor$r[3], digits = 2)
+
+dead.act.p <- ifelse(cor$p[2] == 0, '< 0.0001', round(cor$p[2], digits = 3))
+dead.act.r <- round(cor$r[2], digits = 2)
+
+dead.dorm.p <- ifelse(cor$p[6] == 0, '< 0.0001', round(cor$p[6], digits = 3))
+dead.dorm.r <- round(cor$r[6], digits = 2)
+
+# this upholds idea that cells are usually in an active or dormant state
+# and that dormant cells are more likely to die
+```
+
+# Plot correlations (standardized by total abundance)
+```{r}
+png(filename="figures/skin.correlations.png",
+    width = 1200, height = 500, res = 96*2)
+
+layout(matrix(c(1,2,3), 1, 3, byrow = TRUE))
+
+# Dormant vs. Active
+plot(ages.st$active, ages.st$dormant, pch = 22, bg = "white", col = "black", 
+     xlab = NA, ylab = NA, xlim = c(0, 1), ylim = c(0,1), cex = 2, lwd = 2,
+     yaxt = "n", xaxt = "n", las = 2)
+box(lwd = 2)
+
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    labels = c("0.0", "0.5", "1.0"), at = c(0, 0.5, 1.0))
+ 
+axis(side = 4, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    at=c(0, 0.5, 1), labels = F)
+ 
+axis(side = 1, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    labels = c("0.0", "0.5", "1.0"), at = c(0, 0.5, 1.0))
+
+axis(side = 3, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    at=c(0, 0.5, 1), labels = F)
+
+mtext("Dormant", side = 2, cex = 0.75, 
+      line = 2.5, adj = 0.5)
+
+mtext("Active", side = 1, cex = 0.75, 
+      line = 3, adj = 0.5)
+      
+dorm.act.r.label <- bquote(italic(r) == .(format(dorm.act.r)))
+text(x = 0.60, y = 0.95, labels = dorm.act.r.label, adj = 0)
+
+dorm.act.p.label <- bquote(italic(P) == .(format(dorm.act.p)))
+text(x = 0.60, y = 0.85, labels = dorm.act.p.label, adj = 0)
+
+# Dead vs. Active
+plot(ages.st$active, ages.st$dead, pch = 22, bg = "white", col = "black", 
+     xlab = NA, ylab = NA, xlim = c(0, 1), ylim = c(0,1), cex = 2, lwd = 2,
+     yaxt = "n", xaxt = "n", las = 2)     
+box(lwd = 2)
+
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    labels = c("0.0", "0.5", "1.0"), at = c(0, 0.5, 1.0))
+ 
+axis(side = 4, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    at=c(0, 0.5, 1), labels = F)
+ 
+axis(side = 1, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    labels = c("0.0", "0.5", "1.0"), at = c(0, 0.5, 1.0))
+
+axis(side = 3, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    at=c(0, 0.5, 1), labels = F)
+
+mtext("Dead", side = 2, cex = 0.75, 
+      line = 2.5, adj = 0.5)
+
+mtext("Active", side = 1, cex = 0.75, 
+      line = 3, adj = 0.5)
+
+dead.act.r.label <- bquote(italic(r) == .(format(dead.act.r)))
+text(x = 0.6, y = 0.95, labels = dead.act.r.label, adj = 0)
+
+dead.act.p.label <- bquote(italic(P) == .(format(dead.act.p)))
+text(x = 0.6, y = 0.85, labels = dead.act.p.label, adj = 0)
+
+# Dead vs. Dormant
+plot(ages.st$dormant, ages.st$dead, pch = 22, bg = "white", col = "black", 
+     xlab = NA, ylab = NA, xlim = c(0, 1), ylim = c(0,1), cex = 2, lwd = 2,
+     yaxt = "n", xaxt = "n", las = 2)     
+box(lwd = 2)
+
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    labels = c("0.0", "0.5", "1.0"), at = c(0, 0.5, 1.0))
+ 
+axis(side = 4, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    at=c(0, 0.5, 1), labels = F)
+ 
+axis(side = 1, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    labels = c("0.0", "0.5", "1.0"), at = c(0, 0.5, 1.0))
+
+axis(side = 3, lwd.ticks = 2, cex.axis = 1.0, las = 1,
+    at=c(0, 0.5, 1), labels = F)
+
+mtext("Dead", side = 2, cex = 0.75, 
+      line = 2.5, adj = 0.5)
+
+mtext("Dormant", side = 1, cex = 0.75, 
+      line = 3, adj = 0.5)
+
+dead.dorm.r.label <- bquote(italic(r) == .(format(dead.dorm.r)))
+text(x = 0.45, y = 0.95, labels = dead.dorm.r.label, adj = 0)
+
+dead.dorm.p.label <- bquote(italic(P) == .(format(dead.dorm.p)))
+text(x = 0.45, y = 0.85, labels = dead.dorm.p.label, adj = 0)
+
+
+# Close Plot Device
+dev.off()
+graphics.off()
+```
+
+# Some 3-D plotting options
+```{r}
+active <-ages.st$active
+dormant <- ages.st$dormant
+dead <- ages.st$dead
+
+scatterplot3d(active, dormant, dead, pch = 22, color = "black")
+plot3d(active, dormant, dead, col="black", size=5)
+# ggtern(data=ages,aes(active,dormant,dead)) + 
+#   geom_point(fill="red",shape = 21, size = 4) + 
+#   theme_tern_bw()
+```
+
+
+# Plot correlations (standardized by total abundance)
+```{r}
+png(filename="figures/skin.correlations.png",
+    width = 1200, height = 500, res = 96*2)
+
+layout(matrix(c(1,2,3), 1, 3, byrow = TRUE))
+
+# Dormant vs. Active
+plot(ages$active, ages$dormant, pch = 22, bg = "white",
+     col = "black", log = "xy", xlab = NA, ylab = NA, 
+     xlim = c(5000, 10000000), ylim = c(50000,10000000), yaxt = "n", xaxt = "n",
+     cex = 2, lwd = 2)
+box(lwd = 2)
+
+axis(side = 2, lwd.ticks = 2, cex.axis = 1, las = 1,
+     labels = expression(10^4, 10^5, 10^6, 10^7),
+     at = c(10^4, 10^5, 10^6, 10^7))
+ 
+axis(side = 4, lwd.ticks = 2, cex.axis = 1, las = 1,
+    at=c(10^4, 10^5, 10^6, 10^7), labels = F)
+ 
+axis(side = 1, lwd.ticks = 2, cex.axis = 1, las = 1,
+     labels = expression(10^4, 10^5, 10^6, 10^7),
+     at = c(10^4, 10^5, 10^6, 10^7))
+
+axis(side = 3, lwd.ticks = 2, cex.axis = 1, las = 1,
+    at = c(10^4, 10^5, 10^6, 10^7), labels = F)
+
+mtext(expression('Dormant (cells cm'^-2*')'), side = 2, cex = 0.75, 
+      line = 2.5, adj = 0.5)
+
+mtext(expression('Active (cells cm'^-2*')'), side = 1, cex = 0.75, 
+      line = 3, adj = 0.5)
+      
+dorm.act.r.label <- bquote(italic(r) == .(format(dorm.act.r)))
+text(x = 5*10^6, y = 2*10^5, labels = dorm.act.r.label)
+
+dorm.act.p.label <- bquote(italic(P) == .(format(dorm.act.p)))
+text(x = 5*10^6, y = 1*10^5, labels = dorm.act.p.label)
+
+# Dead vs. Active
+plot(ages$active, ages$dead, pch = 22, bg = "white",
+     col = "black", log = "xy", xlab = NA, ylab = NA, 
+     xlim = c(5000, 10000000), ylim = c(50000,100000000), 
+     yaxt = "n", xaxt = "n", cex = 2, lwd = 2)
+     
+box(lwd = 2)
+
+axis(side = 2, lwd.ticks = 2, cex.axis = 1, las = 1,
+     labels = expression(10^4, 10^5, 10^6, 10^7, 10^8),
+     at = c(10^4, 10^5, 10^6, 10^7,10^8))
+ 
+axis(side = 4, lwd.ticks = 2, cex.axis = 1, las = 1,
+    at=c(10^4, 10^5, 10^6, 10^7, 10^8), labels = F)
+ 
+axis(side = 1, lwd.ticks = 2, cex.axis = 1, las = 1,
+     labels = expression(10^4, 10^5, 10^6, 10^7),
+     at = c(10^4, 10^5, 10^6, 10^7))
+
+axis(side = 3, lwd.ticks = 2, cex.axis = 1, las = 1,
+    at = c(10^4, 10^5, 10^6, 10^7), labels = F)
+
+mtext(expression('Dead (cells cm'^-2*')'), side = 2, cex = 0.75, 
+      line = 2.5, adj = 0.5)
+
+mtext(expression('Active (cells cm'^-2*')'), side = 1, cex = 0.75, 
+      line = 3, adj = 0.5)
+
+dead.act.r.label <- bquote(italic(r) == .(format(dead.act.r)))
+text(x = 5*10^6, y = 2*10^5, labels = dead.act.r.label)
+
+dead.act.p.label <- bquote(italic(P) == .(format(dead.act.p)))
+text(x = 5*10^6, y = 1*10^5, labels = dead.act.p.label)
+
+# Dead vs. Dormant
+plot(ages$dormant, ages$dead, pch = 22, bg = "white",
+     col = "black", log = "xy", xlab = NA, ylab = NA, 
+     xlim = c(100000, 10000000), ylim = c(50000,100000000), 
+     yaxt = "n", xaxt = "n", cex = 2, lwd = 2)
+     
+box(lwd = 2)
+
+axis(side = 2, lwd.ticks = 2, cex.axis = 1, las = 1,
+     labels = expression(10^4, 10^5, 10^6, 10^7, 10^8),
+     at = c(10^4, 10^5, 10^6, 10^7,10^8))
+ 
+axis(side = 4, lwd.ticks = 2, cex.axis = 1, las = 1,
+    at=c(10^4, 10^5, 10^6, 10^7, 10^8), labels = F)
+ 
+axis(side = 1, lwd.ticks = 2, cex.axis = 1, las = 1,
+     labels = expression(10^4, 10^5, 10^6, 10^7),
+     at = c(10^4, 10^5, 10^6, 10^7))
+
+axis(side = 3, lwd.ticks = 2, cex.axis = 1, las = 1,
+    at = c(10^4, 10^5, 10^6, 10^7), labels = F)
+
+mtext(expression('Dormant (cells cm'^-2*')'), side = 1, cex = 0.75, 
+      line = 2.5, adj = 0.5)
+
+mtext(expression('Dead (cells cm'^-2*')'), side = 2, cex = 0.75, 
+      line = 3, adj = 0.5)
+
+dead.dorm.r.label <- bquote(italic(r) == .(format(dead.dorm.r)))
+text(x = 5*10^6, y = 2*10^5, labels = dead.dorm.r.label)
+
+dead.dorm.p.label <- bquote(italic(P) == .(format(dead.dorm.p)))
+text(x = 5*10^6, y = 1*10^5, labels = dead.dorm.p.label)
+
+# Close Plot Device
+dev.off()
+graphics.off()

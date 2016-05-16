@@ -67,9 +67,9 @@ cell.cm2 <- ((cell.filter * samp.vol) / sub.vol) / area.cm2
 # Merge with habitat matrix
 hab <- cbind(hab, cell.cm2)
 
-# Minimum and maximum density of cells (cm^-2)
-min(hab$cell.cm2)
-max(hab$cell.cm2)
+# Minimum and maximum density of cells
+cat("minimum cell density =", format(min(hab$cell.cm2), scientific = TRUE), "per cm2")
+cat("maximum cell density =",format(max(hab$cell.cm2), scientific = TRUE), "per cm2")
 
 # Make table of total abundances
 sem <- function(x){
@@ -179,12 +179,12 @@ hab.gend <- hab.prop$hab.gender
 subjects <- hab.prop$subject
 
 # Run PERMANOVA with adonis function blocking by subject
-adonis(hab.prop.cell ~ hab.type, method = "bray", permutations = 999, 
+adonis(hab.prop.cell ~ hab.type, method = "bray", permutations = 9999, 
        strata = subjects) 
 
 # Run PERMANOVA with adonis function blocking by subject with gender
 adonis(hab.prop.cell ~ hab.type + hab.gend + hab.type * hab.gend, 
-       method = "bray", permutations = 999, strata = subjects) 
+       method = "bray", permutations = 9999, strata = subjects) 
 ```
 
 ## 3) ANALYSIS OF DIFFERENT AGES

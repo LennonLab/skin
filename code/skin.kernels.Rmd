@@ -1,0 +1,91 @@
+---
+  title: "Skin Metabolic Activity"
+author: "Don R Schoolmaster Jr. and Jay T Lennon"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+  - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+# Set working directory
+```{r}
+rm(list=ls())
+getwd()
+setwd("~/GitHub/skin")
+```
+
+# Load packages
+```{r}
+require("png")
+```
+
+# Read in data 
+```{r}
+ages.raw.count <- read.table("data/skin.age.counts.txt", sep = "\t", header = T)
+
+# Remove subject "G1"
+ages <- ages.raw.count[ ! ages.raw.count$subject == "G1", ]
+```
+
+## Make kernels
+```{r}
+act.prop <- ages$active / ages$total
+dorm.prop <- ages$dormant / ages$total
+dead.prop <- ages$dead / ages$total
+
+kern.act.prop <- density(act.per, bw = 0.1) 
+kern.dead.prop <- density(dorm.per, bw = 0.1)
+kern.dorm.prop <- density(dead.per, bw = 0.1)
+
+act.log <- log10(ages$active)
+dorm.log <- log10(ages$dormant)
+dead.log <- log10(ages$dead)
+
+kern.act.log <- density(act.log, bw = 0.1) 
+kern.dead.log <- density(dorm.log, bw = 0.1)
+kern.dorm.log <- density(dead.log, bw = 0.1)
+```
+
+## Make kernel density plots
+```{r}
+# Set-up for printing 
+png(filename="/Users/lennonj/GitHub/skin/figures/Fig-kernel.png",width = 1200, height = 900, res = 96*2)
+
+# Set plotting parameters
+plot.new()
+par(mar = c(7, 7, 5, 7))
+#layout <- layout(cbind(1, 2, 3), height = c(2, 2, 2)) 
+plot(kern.act.prop, main = NA, xaxt = "n", yaxt = "n", cex.lab = 1.5, ylab = "",
+     xlab = "", xlim = c(-0.1, 1.1), ylim = c(0, 4), type = "l", lwd = 3, col = "red")
+
+points(kern.dead.prop, type = "l", lwd = 3, col = "darkgreen")
+points(kern.dorm.prop, type = "l", lwd = 3, col = "blue")
+
+mtext('Density', side = 2, outer = TRUE, cex = 2.25, 
+      line = -3, adj = 0.55)
+
+mtext(expression('Metabolic Status (%)'), side = 1, outer = TRUE, 
+      cex = 2.25, line = -3, adj = 0.5)
+     
+    axis(side = 1, lwd.ticks = 2, cex.axis = 2, las = 1,
+        labels = c("0", "50", "100"), at = c(0, 0.5, 1.0))
+
+     axis(side = 3, lwd.ticks = 2.25, cex.axis = 2, las = 1,
+        at = c(0, 0.5, 1.0), labels = F)
+
+     axis(side = 2, lwd.ticks = 2.25, cex.axis = 2, las = 1,
+        at = c(0, 2, 4), labels = T)
+
+    axis(side = 4, lwd.ticks = 2.25, cex.axis = 2, las = 1,
+        at = c(0, 2, 4), labels = F)
+
+box(lwd = 2.25)
+
+legend("topright", c("active", "dormant", "dead"), bty = "n", y.intersp = 1, lty = c(1,1,1), 
+       lwd = 2.5, seg.len = 2.75, col = c("red","blue","darkgreen"), cex = 1)
+
+dev.off() # this writes plot to folder
+graphics.off() # shuts down open devices
+```
+

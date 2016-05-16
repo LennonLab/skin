@@ -103,7 +103,7 @@ t(data.frame(ded.n,ded.p))
 tot.n <- rownames(summary(f.tot)$coef)[which(summary(f.tot)$coef[,4]<0.05)] 
 tot.p <- summary(f.tot)$coef[which(summary(f.tot)$coef[,4]<0.05)] # parms
 t(data.frame(tot.n,tot.p))
-# Finding: total cells decreae with age and shower length (l2 and l3); increase with ecze
+# Finding: total cells decrease with age and shower length (l2 and l3); increase with ecze
 
 # age and shower length both reduce cells and affect distribution of cells
 # shower freq increases active cells
@@ -170,7 +170,7 @@ cor <- corr.test(data.frame(active = resid(f.act), dormant = resid(f.dor),
                 dead = resid(f.ded)), method = "pearson", adjust = "none")
 print(cor, digits = 4)
 
-## The strong residual correlations among all metaolic classes suggests we are missing
+## The strong residual correlations among all metabolic classes suggests we are missing
 ## major cues the cells are using to determine activity. There are a few things this 
 ## could be attributed to:
 ## 1) Dormancy transitions can be stochastic (i.e. bet hedging). Does this make sense?

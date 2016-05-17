@@ -34,9 +34,9 @@ act.prop <- ages$active / ages$total
 dorm.prop <- ages$dormant / ages$total
 dead.prop <- ages$dead / ages$total
 
-kern.act.prop <- density(act.per, bw = 0.1) 
-kern.dead.prop <- density(dorm.per, bw = 0.1)
-kern.dorm.prop <- density(dead.per, bw = 0.1)
+kern.act.prop <- density(act.prop, bw = 0.1) 
+kern.dead.prop <- density(dorm.prop, bw = 0.1)
+kern.dorm.prop <- density(dead.prop, bw = 0.1)
 
 act.log <- log10(ages$active)
 dorm.log <- log10(ages$dormant)
@@ -50,7 +50,7 @@ kern.dorm.log <- density(dead.log, bw = 0.1)
 ## Make kernel density plots
 ```{r}
 # Set-up for printing 
-png(filename="/Users/lennonj/GitHub/skin/figures/Fig-kernel.png",width = 1200, height = 900, res = 96*2)
+png(filename="/Users/lennonj/GitHub/skin/figures/skin-kernel.png",width = 1200, height = 900, res = 96*2)
 
 # Set plotting parameters
 plot.new()

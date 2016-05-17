@@ -61,9 +61,13 @@ X <- data.frame(ages.2[,-c(1,3:5)])
 
 # Center age for later interpretation
 cat("average in survey is", round(mean(ages$age),1))
-X$age <- X$age-mean(X$age)
 prop.act <- (ages$active/ages$total)
 summary(f.act<-glm.nb(ages$active~.-total+offset(log(total)),data=X))
+X$age <- X$age-mean(X$age)
+age.match <- data.frame(ages$age, X$age)
+age.fit <- lm(ages.age ~ X.age, data = age.match)
+inter <- coef(age.fit)[1]
+  
 ```
 
 # Plotting non-log-transformed
@@ -73,27 +77,30 @@ png(filename="figures/skin.age.png",
 plot.new()
 par(mar = c(5, 6, 4, 2))
 
-plot(ages$age, prop.act, ylim = c(0, 0.4), xlim = c(-10, 90), 
+plot(X$age, prop.act, ylim = c(-0.05, 0.4), xlim = c(-45, 50), 
      xlab = expression(paste("Age")), cex.lab = 1.5,
      ylab = NA,
      xaxt = "n", yaxt = "n",
      pch = 22, lwd = 1.5, bg = "red", col = "black", cex = 2)
 
 mtext("Proportion Active", side = 2, line = 4, cex = 1.5)
-axis(side=1, lwd.ticks = 2, cex.axis = 1.5, at = c(0, 20, 40, 60, 80), las=1) 
-axis(side=3, lwd.ticks = 2, cex.axis = 1.5, at = c(0, 20, 40, 60, 80), labels = F)
+axis(side=1, lwd.ticks = 2, cex.axis = 1.5, las = 1, labels = c("0", "20",
+              "40", "60", "80"), at = c(0 - inter, 20 - inter, 40 - inter, 
+              60 - inter, 80 - inter))
+axis(side=3, lwd.ticks = 2, cex.axis = 1.5, at = c(0 - inter, 20 - inter, 
+              40 - inter, 60 - inter, 80 - inter), labels = F)
 axis(side = 2, lwd.ticks = 2, cex.axis = 1.5, las = 1,
-    labels = c("0.0", "0.10", "0.2", "0.3", "0.4"), at = c(0, 0.1, 0.2, 0.3, 0.4))
+    labels = c("0.0", "0.1", "0.2", "0.3", "0.4"), at = c(0, 0.1, 0.2, 0.3, 0.4))
 axis(side=4, lwd.ticks = 2, cex.axis = 1, at = c(0, 0.10, 0.20, 0.30, 0.40), labels = F)
 box(lwd = 2)
 
-curve(exp(coef(f.act)[1]) * exp(coef(f.act)[2]*x), from = -5, to = 90, 
+curve(exp(coef(f.act)[1]) * exp(coef(f.act)[2]*x), from = -40, to = 45, 
       ylim = c(0, 0.5), add = TRUE, lwd = 2, lty = 1)
 
 curve(exp(coef(f.act)[1]) * exp(coef(f.act)[2]*x) *exp(coef(f.act)[11]), 
-      from = -5, to = 90, add = TRUE, lwd = 2, lty = 2)
+      from = -40, to = 45, add = TRUE, lwd = 2, lty = 2)
 
-legend(90, 0.42, legend = c("short shower", "long shower"), seg.len = 2.0,
+legend(45, 0.42, legend = c("short shower", "long shower"), seg.len = 2.0,
        xjust = 1, lwd = 2, lty = c(1, 2), cex = 0.85, bty = 'n', y.intersp = 1.0)
 
 # Close Plot Device
@@ -108,25 +115,30 @@ png(filename="figures/skin.age-log.png",
 plot.new()
 par(mar = c(5, 6, 4, 2))
 
-plot(ages$age, prop.act, log = "y", ylim = c(0.001, 2.0), xlim = c(-010, 90), 
+plot(X$age, prop.act, log = "y", ylim = c(0.001, 0.4), xlim = c(-45, 50), 
      xlab = expression(paste("Age")), cex.lab = 1.5,
      ylab = NA,
      xaxt = "n", yaxt = "n",
      pch = 22, lwd = 1.5, bg = "red", col = "black", cex = 2)
 mtext("Proportion Active", side = 2, line = 4, cex = 1.5)
-axis(side=1, lwd.ticks = 2, cex.axis = 1, at = c(0, 20, 40, 60, 80), las=1) 
-axis(side=3, lwd.ticks = 2, cex.axis = 1, at = c(0, 20, 40, 60, 80), labels = F)
+#axis(side=1, lwd.ticks = 2, cex.axis = 1, at = c(0, 20, 40, 60, 80), las=1) 
+axis(side=1, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0", "20",
+              "40", "60", "80"), at = c(0 - inter, 20 - inter, 40 - inter, 
+              60 - inter, 80 - inter))
+#axis(side=3, lwd.ticks = 2, cex.axis = 1, at = c(0, 20, 40, 60, 80), labels = F)
+axis(side=3, lwd.ticks = 2, cex.axis = 1, at = c(0 - inter, 20 - inter, 
+              40 - inter, 60 - inter, 80 - inter), labels = F)
 axis(side=2, lwd.ticks = 2, cex.axis = 1, at = c(0, 0.005, 0.05, 0.5), las=1)
 axis(side=4, lwd.ticks = 2, cex.axis = 1, at = c(0, 0.005, 0.05, 0.5), labels = F)
 box(lwd = 2)
 
-curve(exp(coef(f.act)[1]) * exp(coef(f.act)[2]*x), from = -5, to = 85, 
+curve(exp(coef(f.act)[1]) * exp(coef(f.act)[2]*x), from = -40, to = 45, 
       ylim = c(0, 0.5), add = TRUE, lwd = 2, lty = 1)
 
 curve(exp(coef(f.act)[1]) * exp(coef(f.act)[2]*x) *exp(coef(f.act)[11]), 
-      from = -5, to = 90, add = TRUE, lwd = 2, lty = 2)
+      from = -40, to = 45, add = TRUE, lwd = 2, lty = 2)
 
-legend(95, 2.5, legend = c("short shower", "long shower"), seg.len = 2.0,
+legend(5, 0.003, legend = c("short shower", "long shower"), seg.len = 2.0,
        xjust = 1, lwd = 2, lty = c(1, 2), bty = 'n', cex = 0.85, y.intersp = 1.0)
 
 # Close Plot Device

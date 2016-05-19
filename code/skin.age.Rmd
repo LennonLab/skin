@@ -60,7 +60,7 @@ ages.2 <- data.frame(ages[,c(1:6,11:16)], show.f2,show.f3,show.l2,
 X <- data.frame(ages.2[,-c(1,3:5)])
 
 # Center age for later interpretation
-cat("average in survey is", round(mean(ages$age),1))
+cat("average age in survey is", round(mean(ages$age),1))
 prop.act <- (ages$active/ages$total)
 summary(f.act<-glm.nb(ages$active~.-total+offset(log(total)),data=X))
 X$age <- X$age-mean(X$age)
@@ -108,7 +108,7 @@ dev.off()
 graphics.off()
 ```
 
-# Plotting non-log-transformed
+# Plotting log-transformed
 ```{r}
 png(filename="figures/skin.age-log.png",
     width = 800, height = 800, res = 96*2)
@@ -144,4 +144,20 @@ legend(5, 0.003, legend = c("short shower", "long shower"), seg.len = 2.0,
 # Close Plot Device
 dev.off()
 graphics.off()
+```
+
+# Left over code for making regression and confidence intervals
+```{r}
+# Add regression line
+newage <- seq(min(ages$age), max(ages$age), 1)
+act.fit <- summary(f.act<-glm.nb(ages$active~.+offset(log(X$total)),data=X[,-2]))
+regline <- predict(act.fit, newdata = data.frame(age = newage))
+regline <- 10^(regline)
+lines(newage, regline, lwd = 2)
+
+# Add 95% confidence intervals
+conf95 <- predict(fit, newdata = data.frame(age = newage),
+                  interval = c("confidence"), level = 0.95, type = "response")
+conf95 <- 10^(conf95)
+matlines(newage, conf95[, c("lwr", "upr")], type="l", lty = 2, lwd = 2, col = "black")
 ```

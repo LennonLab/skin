@@ -134,31 +134,37 @@ bar.layout <- layout(rbind(1, 2, 3, 4), height = c(4, 4, 5, 1))
 
 barplot.back <- barplot(as.matrix(back.sub),
         ylim = c(0, 1), las = 1,
-        beside = FALSE,
+        beside = FALSE, yaxt = "n",
         cex.axis = 1.5,
         axisnames = FALSE,
         col = c("forestgreen", "blue", "red"), plot = TRUE)
+axis(side=2, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0.0", "0.5",
+              "1.0"), at = c(0, 0.5, 1.0))
 mtext("Back", side = 4, las = 1, cex = 1.5, adj = 0, line = -1)
 
 par(mar = c(1, 7, 1, 5.5))
 
 barplot.arm <- barplot(as.matrix(arm.sub),
         ylim = c(0, 1), las = 1,
-        beside = FALSE,
+        beside = FALSE, yaxt = "n",
         cex.axis = 1.5,
         axisnames = FALSE,
         col = c("forestgreen", "blue", "red"), plot = TRUE)
+axis(side=2, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0.0", "0.5",
+              "1.0"), at = c(0, 0.5, 1.0))
 mtext("Proportion", side = 2, line = 4, cex = 2)
 mtext("Arm", side = 4, las = 1, cex = 1.5, adj = 0, line = -1)
 
 par(mar = c(5, 7, 1, 5.5))
 barplot.knee <- barplot(as.matrix(knee.sub),
         ylim = c(0, 1), las = 1,
-        beside = FALSE,
+        beside = FALSE, yaxt = "n",
         cex.axis = 1.5,
         xlab = "Subjects", cex.lab = 2, cex.names = 1.5,
         axisnames = TRUE, 
         col = c("forestgreen", "blue", "red"), plot = TRUE)
+axis(side=2, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0.0", "0.5",
+              "1.0"), at = c(0, 0.5, 1.0))
 mtext("Knee", side = 4, las = 1, cex = 1.5, adj = 0, line = -1)
 
 par(mar=c(0, 9, 0, 0))

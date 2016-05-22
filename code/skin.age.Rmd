@@ -81,9 +81,9 @@ long.int <- short.int + fit$coefficients[3]
 long.slp <- fit$coefficients[2]
 ```
 
-# Plotting log-transformed
+# Plotting log-transformed PROPORTION data
 ```{r}
-png(filename="figures/skin.age-log.png",
+png(filename="figures/skin.age-proportion.png",
     width = 800, height = 800, res = 96*2)
 plot.new()
 par(mar = c(5, 6, 4, 2))
@@ -120,6 +120,59 @@ legend(5, 0.003, legend = c("short shower", "long shower"), seg.len = 2.0,
 dev.off()
 graphics.off()
 ```
+
+# Post-hoc test to evaluate interaction between age and shower length
+```{r}
+fit2 <- lm(log(ages$active) ~ X$age + show.l2 + X$age*show.l2)
+summary(fit2)
+
+# Multiple regression parameters
+short.int2 <- fit2$coefficients[1]
+short.slp2 <- fit2$coefficients[2]
+long.int2 <- short.int2 + fit2$coefficients[3]
+long.slp2 <- fit2$coefficients[2]
+```
+
+# Plotting log-transformed ABUNDANCE data
+```{r}
+png(filename="figures/skin.age-abundance.png",
+    width = 800, height = 800, res = 96*2)
+plot.new()
+par(mar = c(5, 6, 4, 2))
+
+plot(X$age, ages$active, log = "y", ylim = c(5000, 10000000), xlim = c(-45, 50), 
+     xlab = expression(paste("Age")), cex.lab = 1.5,
+     ylab = NA,
+     xaxt = "n", yaxt = "n",
+     pch = 22, lwd = 1.5, bg = "red", col = "black", cex = 2)
+mtext("Active Bacteria (#/cm2)", side = 2, line = 4, cex = 1.5)
+axis(side=1, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0", "20",
+              "40", "60", "80"), at = c(0 - inter, 20 - inter, 40 - inter, 
+              60 - inter, 80 - inter))
+axis(side=3, lwd.ticks = 2, cex.axis = 1, at = c(0 - inter, 20 - inter, 
+              40 - inter, 60 - inter, 80 - inter), labels = F)
+axis(side=2, lwd.ticks = 2, cex.axis = 1, at = c(10000, 100000, 1000000, 10000000), las=1)
+axis(side=4, lwd.ticks = 2, cex.axis = 1, at = c(10000, 100000, 1000000, 10000000), labels = F)
+box(lwd = 2)
+
+# Add multiple regression lines
+
+curve(exp(coef(fit2)[1]) * exp(coef(fit2)[2]*x), from = -40, to = 45, 
+       ylim = c(10000, 10000000), add = TRUE, lwd = 2, lty = 1)
+
+curve(exp(coef(fit2)[1] + coef(fit2)[3]) * exp(coef(fit2)[2]*x),
+      from = -40, to = 45, ylim = c(10000, 10000000), add = TRUE, lwd = 2, lty = 2)
+
+legend(60, 20000000, legend = c("short shower", "long shower"), seg.len = 2.0,
+       xjust = 1, lwd = 2, lty = c(1, 2), bty = 'n', cex = 0.85, y.intersp = 1.0)
+
+# Close Plot Device
+dev.off()
+graphics.off()
+```
+
+
+
 
 # Plotting non-log-transformed
 ```{r}

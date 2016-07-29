@@ -1,0 +1,73 @@
+---
+  title: "Skin Metabolic Activity"
+author: "Don R Schoolmaster Jr. and Jay T Lennon"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+  - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+# Set working directory
+```{r}
+rm(list=ls())
+getwd()
+setwd("~/GitHub/skin")
+```
+
+# Load packages
+```{r}
+require("MASS")
+require("psych")
+```
+
+# Read in data 
+```{r}
+ages.raw.count <- read.table("data/skin.age.counts.txt", sep = "\t", header = T)
+
+# Remove subject "G1"
+ages <- ages.raw.count[ ! ages.raw.count$subject == "G1", ]
+```
+
+# Create dummy variables for multinomial variables
+```{r}
+# Shower frequency
+  # "1" = < three times per week
+  # "2" = every other day
+  # "3" = once per day
+show.f2 <- ifelse(ages$show.freq==2,1,0)
+show.f3 <- ifelse(ages$show.freq==3,1,0)
+
+# Shower length
+  # "1" = 0 - 5 mins
+  # "2" = 5 - 15 mins
+  # "3" = > 15 mins
+show.l2 <- ifelse(ages$show.leng==2,1,0)
+show.l3 <- ifelse(ages$show.leng==3,1,0)
+
+# Last shower
+  # "1" = > 48 hrs
+  # "2" = 24 - 48 hrs
+  # "3" = < 24 hrs
+show.last2 <- ifelse(ages$last.show==2,1,0)
+show.last3 <- ifelse(ages$last.show==3,1,0)
+
+# Merge dummry variables into dataframe
+ages.2 <- data.frame(ages[,c(1:6,11:16)], show.f2,show.f3,show.l2, 
+          show.l3,show.last2,show.last3)
+
+# Set up a design matrix that we might use later
+X <- data.frame(ages.2[,-c(1,3:5)])
+
+
+summary(f.act<-glm.nb(ages$active~.+offset(log(X$total)),data=X[,-2]))
+who<-names(coef(f.act))[summary(f.act)$coef[,4]<0.05]
+who<-who[-1]
+summary(f.act.int<-glm.nb(ages$active~age*show.l2+age*show.f3+offset(log(X$total)),data=X[,who]))
+cf<-coef(f.act.int)
+summary(f.act.int<-glm.nb(ages$active~age*show.l2+offset(log(X$total)),data=X[,who]))
+cf<-coef(f.act.int)
+cf
+plot(log(ages$active/ages$total)~X$age,pch=21,bg=X$show.l2+1)
+curve((cf[1]+(cf[2])*x),from=-40,to=40,add = T)
+curve((cf[1]+cf[3]+(cf[2]+cf[5])*x),from=-40,to=40,add = T)

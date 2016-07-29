@@ -1,0 +1,142 @@
+---
+title: "Skin Microbiome"
+author: "Donald R. Schoolmaster Jr"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+   - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+The goal of this analysis is to create a structural equation model (SEM) for the relative distribtion of active, dormant and dead bacterial associated with the human skin. We begin with some basic demographic and behavioral variables, along with bacterial cell counts for each person. 
+
+The initial model is that demography (i.e., age in this case) has direct effects on the distribution of bacterial metabolic status as well as indirect effects mediatied through behaviors and environement. 
+
+I had to make a decision about how to represent the relationship between the activity categories and the total, should the categories point at the total, or total at the categories? I decided that the exogenous processes set the total cell number, once there, the cells could change activity status. Thus, I pointed the arrows from total to each category. 
+
+\includegraphics[width= .75\textwidth]{../out2.pdf}
+
+## 1) SETUP
+### A. Retrieve and set working directory
+```{r, results = 'hide'}
+rm(list = ls())
+getwd()
+setwd("~/GitHub/skin")
+```
+
+### B. Load data
+```{r}
+# Load raw data
+ages.raw <- read.table("data/skin.age.txt", sep = "\t", header = TRUE)
+
+# Caculate total bacterial abundances
+area.cm2 <- 6.4516  # Area sampled (cm^2) per subject
+samp.vol <- 5 # Sample volume containg skin bacteria (mL)
+sub.vol <- 1.5 # Subsample volume that went onto filer (mL)
+tow.diam <- 1.64 # Inside diameter (diam) and radius (rad) of filter tower (cm)
+tow.rad <- tow.diam / 2 # Tower radiaus (cm)
+filter.area <- pi * (tow.rad)^2 # Area of filter
+field.width <- 0.0215 # Width of field (cm) with 40x objective
+field.height <- 0.0160 # Height of field (cm) with 40x objective
+field.cm2 <- field.width * field.height # Field area
+fields.filter <- filter.area / field.cm2 # Number of fiels per filter
+cell.filter <- ages.raw[,3:6] * fields.filter # Bacterial cells per filter
+cell.cm2 <- ((cell.filter * samp.vol) / sub.vol) / area.cm2 # Bacterial density (cm^-2)
+
+# New data frame with cell densities expresssed per cm^2 of skin
+ages.counts <- data.frame(ages.raw[,1:2],cell.cm2, ages.raw[,7:ncol(ages.raw)])
+
+# Export data to table
+write.table(ages.counts, "~/GitHub/skin/data/skin.age.counts.txt", sep="\t") 
+
+# Remove subject "G1"
+ages <- ages.raw[ ! ages.raw$subject == "G1", ]
+```
+
+### C. Make dummy variables and design matrix
+```{r}
+#shower frequency
+show.f2 <- ifelse(ages$show.freq == 2, 1, 0)
+show.f3 <- ifelse(ages$show.freq == 3, 1, 0)
+
+#shower length
+show.l2 <- ifelse(ages$show.leng == 2, 1, 0)
+show.l3 <- ifelse(ages$show.leng == 3, 1, 0)
+
+#last shower
+show.last2 <- ifelse(ages$last.show == 2, 1, 0)
+show.last3 <- ifelse(ages$last.show == 3, 1, 0)
+
+# Create new data.frame
+ages.2 <- data.frame(ages[,c(1:6, 11:16)], show.f2, show.f3, 
+                     show.l2,show.l3,show.last2,show.last3)
+
+# Create design matrix
+X <- as.matrix(cbind(rep(1, 37), ages.2[,-c(1, 3:5)]))
+```
+
+### D. Fit models for each category
+```{r}
+# Active
+summary(f.act <- lm(log(ages$active)~.,data = data.frame(X[,-1])))
+
+# Dormant
+summary(f.dor <- lm(log(ages$dormant)~.,data = data.frame(X[,-1])))
+
+# Dead
+summary(f.ded <- lm(log(ages$dead)~.,data = data.frame(X[,-1])))
+
+# Total
+summary(f.tot <- lm(log(ages$total)~.,data = data.frame(X[,-c(1,3)])))
+
+# Residual correlation
+cor(data.frame(active = resid(f.act),dormant = resid(f.dor), dead = resid(f.ded)))
+```
+
+### E. Logistic regression on each of the behavioral/environmental variables
+```{r}
+# Set up list for results
+pred.fits <- list()
+
+# Fit models
+for(i in 1:12)pred.fits[[i]] <- glm(X[,i+3]~X[,2],data = data.frame(X),family = binomial)
+
+# Print fits
+for(i in 1:12)print(summary(pred.fits[[i]]))
+
+# Which ones have significant age effect?
+colnames(X)[which(sapply(pred.fits, function(x)summary(x)$coef[2,"Pr(>|z|)"]) < 0.052)+3]
+
+# For shower length 15<x<30 calculate Tjur's R^2
+mean(predict(pred.fits[[10]], type='response')[which(show.l3 == 1)])-
+  mean(predict(pred.fits[[10]],type='response')[which(show.l3 == 0)])
+```
+
+### F. Collect significant effects (except age->etoh) into a single graph
+
+\includegraphics[width= .75\textwidth]{../NewOut.pdf}
+
+If we were going to use a stepwise method to simplify the models...(we would have to defend this choice if were were going to use it)
+
+```{r}
+f.act2<-step(f.act,direction = 'both', trace=F)
+f.dor2<-step(f.dor,direction = 'both', trace=F)
+f.ded2<-step(f.ded,direction = 'both', trace=F)
+f.tot2<-step(f.tot,direction = 'both', trace=F)
+```
+
+```{r}
+#active2
+summary(f.act2)
+#dormant2
+summary(f.dor2)
+#dead2
+summary(f.ded2)
+#total2
+summary(f.tot2)
+```
+
+Some neat stuff here. 
+1. Showering including and antibiotic (negative coef) variables show up in the best dormant model
+2. antibiotic (negative coef) shows up in the dead model
+3) age shows up in the total cell count model with a coef that is almost identical to what we find for the active model (-0.020).

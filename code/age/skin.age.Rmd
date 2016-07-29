@@ -107,6 +107,19 @@ box(lwd = 2)
 
 # Add multiple regression lines
 
+summary(f.act<-glm.nb(ages$active~.+offset(log(X$total)),data=X[,-2]))
+who<-names(coef(f.act))[summary(f.act)$coef[,4]<0.05]
+who<-who[-1]
+summary(f.act.int<-glm.nb(ages$active~age*show.l2+age*show.f3+offset(log(X$total)),data=X[,who]))
+cf<-coef(f.act.int)
+summary(f.act.int<-glm.nb(ages$active~age*show.l2+offset(log(X$total)),data=X[,who]))
+cf<-coef(f.act.int)
+cf
+plot(log(ages$active/ages$total)~X$age,pch=21,bg=X$show.l2+1)
+curve((cf[1]+(cf[2])*x),from=-40,to=40,add = T)
+curve((cf[1]+cf[3]+(cf[2]+cf[5])*x),from=-40,to=40,add = T)
+
+
 curve(exp(coef(fit)[1]) * exp(coef(fit)[2]*x), from = -40, to = 45, 
        ylim = c(0, 0.5), add = TRUE, lwd = 2, lty = 1)
 

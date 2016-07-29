@@ -57,24 +57,24 @@ plot.new()
 par(mar = c(7, 7, 5, 7))
 #layout <- layout(cbind(1, 2, 3), height = c(2, 2, 2)) 
 plot(kern.act.prop, main = NA, xaxt = "n", yaxt = "n", cex.lab = 1.5, ylab = "",
-     xlab = "", xlim = c(-0.1, 1.1), ylim = c(0, 4), type = "l", lwd = 3, col = "red")
+     xlab = "", xlim = c(-0.1, 1.1), ylim = c(0, 4), type = "l", lwd = 3.5, col = "red")
 
-points(kern.dead.prop, type = "l", lwd = 3, col = "darkgreen")
-points(kern.dorm.prop, type = "l", lwd = 3, col = "blue")
+points(kern.dead.prop, type = "l", lwd = 3.5, col = "chartreuse3")
+points(kern.dorm.prop, type = "l", lwd = 3.5, col = "darkblue")
 
-mtext('Density', side = 2, outer = TRUE, cex = 2.25, 
-      line = -3, adj = 0.55)
+mtext('Density', side = 2, outer = TRUE, cex = 1.5, 
+      line = -4, adj = 0.55)
 
 mtext(expression('Metabolic Status (%)'), side = 1, outer = TRUE, 
-      cex = 2.25, line = -3, adj = 0.5)
+      cex = 1.5, line = -3, adj = 0.5)
      
-    axis(side = 1, lwd.ticks = 2, cex.axis = 2, las = 1,
+    axis(side = 1, lwd.ticks = 2, cex.axis = 1.5, las = 1,
         labels = c("0", "50", "100"), at = c(0, 0.5, 1.0))
 
      axis(side = 3, lwd.ticks = 2.25, cex.axis = 2, las = 1,
         at = c(0, 0.5, 1.0), labels = F)
 
-     axis(side = 2, lwd.ticks = 2.25, cex.axis = 2, las = 1,
+     axis(side = 2, lwd.ticks = 2.25, cex.axis = 1.5, las = 1,
         at = c(0, 2, 4), labels = T)
 
     axis(side = 4, lwd.ticks = 2.25, cex.axis = 2, las = 1,
@@ -83,7 +83,7 @@ mtext(expression('Metabolic Status (%)'), side = 1, outer = TRUE,
 box(lwd = 2.25)
 
 legend("topright", c("active", "dormant", "dead"), bty = "n", y.intersp = 1, lty = c(1,1,1), 
-       lwd = 2.5, seg.len = 2.75, col = c("red","blue","darkgreen"), cex = 1)
+       lwd = 2.5, seg.len = 2.75, col = c("red","darkblue","chartreuse3"), cex = 1)
 
 dev.off() # this writes plot to folder
 graphics.off() # shuts down open devices

@@ -80,11 +80,15 @@ table.abund <- aggregate(hab[, c("cell.cm2")],
             by = list(hab$habitat), function(x) c(mean=mean(x), sem=sem(x)))
 
 format(table.abund[,1:2], scientific = TRUE)
+
+# anova.fit <- aov(total ~ habitat + Error(subject/total), data = hab)
+anova.fit <- aov(total ~ habitat, data = hab)
+TukeyHSD(anova.fit)
 ```
 
 ### C. Calculate proportions of each metabolic class
 ```{r}
-# Percent active, dead, and dormanc
+# Percent active, dead, and dormant
 act.prop <- hab$active/hab$total
 dead.prop <- hab$dead/hab$total 
 dorm.prop <- hab$dormant/hab$total 
@@ -137,8 +141,8 @@ barplot.back <- barplot(as.matrix(back.sub),
         beside = FALSE, yaxt = "n",
         cex.axis = 1.5,
         axisnames = FALSE,
-        col = c("forestgreen", "blue", "red"), plot = TRUE)
-axis(side=2, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0.0", "0.5",
+        col = c("chartreuse3", "darkblue", "red"), plot = TRUE)
+axis(side=2, lwd.ticks = 2, cex.axis = 1.5, las = 1, labels = c("0.0", "0.5",
               "1.0"), at = c(0, 0.5, 1.0))
 mtext("Back", side = 4, las = 1, cex = 1.5, adj = 0, line = -1)
 
@@ -149,8 +153,8 @@ barplot.arm <- barplot(as.matrix(arm.sub),
         beside = FALSE, yaxt = "n",
         cex.axis = 1.5,
         axisnames = FALSE,
-        col = c("forestgreen", "blue", "red"), plot = TRUE)
-axis(side=2, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0.0", "0.5",
+        col = c("chartreuse3", "darkblue", "red"), plot = TRUE)
+axis(side=2, lwd.ticks = 2, cex.axis = 1.5, las = 1, labels = c("0.0", "0.5",
               "1.0"), at = c(0, 0.5, 1.0))
 mtext("Proportion", side = 2, line = 4, cex = 2)
 mtext("Arm", side = 4, las = 1, cex = 1.5, adj = 0, line = -1)
@@ -162,8 +166,8 @@ barplot.knee <- barplot(as.matrix(knee.sub),
         cex.axis = 1.5,
         xlab = "Subjects", cex.lab = 2, cex.names = 1.5,
         axisnames = TRUE, 
-        col = c("forestgreen", "blue", "red"), plot = TRUE)
-axis(side=2, lwd.ticks = 2, cex.axis = 1, las = 1, labels = c("0.0", "0.5",
+        col = c("chartreuse3", "darkblue", "red"), plot = TRUE)
+axis(side=2, lwd.ticks = 2, cex.axis = 1.5, las = 1, labels = c("0.0", "0.5",
               "1.0"), at = c(0, 0.5, 1.0))
 mtext("Knee", side = 4, las = 1, cex = 1.5, adj = 0, line = -1)
 
@@ -171,7 +175,7 @@ par(mar=c(0, 9, 0, 0))
 plot.new()
 
 legend(0, 1, c("Active","Dormant","Dead"), pt.lwd = 2, col = "black", 
-      pt.bg = c("red", "blue", "forestgreen"), pch = c(22, 22, 22), bty='n',
+      pt.bg = c("chartreuse3", "darkblue", "red"), pch = c(22, 22, 22), bty='n',
       ncol = 3, cex = 2, pt.cex = 5, xjust = 0)
 
 dev.off() # this writes plot to folder

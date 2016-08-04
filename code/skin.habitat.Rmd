@@ -199,7 +199,13 @@ adonis(hab.prop.cell ~ hab.type, method = "bray", permutations = 9999,
 adonis(hab.prop.cell ~ hab.type + hab.gend + hab.type * hab.gend, 
        method = "bray", permutations = 9999, strata = subjects) 
 
-# Run PERMANOVA with adonis function ono active vs. inactive blocking by subject
+# Run PERMANOVA with adonis function on active vs. inactive blocking by subject
 adonis(hab.prop.act.inact ~ hab.type, method = "bray", permutations = 9999, 
        strata = subjects) 
+
+# Run ANOVA on ratio of active to inactive (dead + dormant) to test for habitat
+act.inact.ratio <- hab.prop.act.inact$act.prop / hab.prop.act.inact$inact.prop
+anova.fit2 <- aov(act.inact.ratio ~ habitat, data = hab)
+summary(anova.fit2)
+TukeyHSD(anova.fit2)
 ```

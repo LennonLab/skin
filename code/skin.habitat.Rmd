@@ -94,6 +94,10 @@ dead.prop <- hab$dead/hab$total
 dorm.prop <- hab$dormant/hab$total 
 inact.prop <- (hab$dead + hab$dormant) / hab$total 
 
+# What is mean +/- sem for active cells?
+cat("mean and sem of active portion =", format(c(mean(act.prop), sem(act.prop))))
+cat("mean and sem of inactive portion =", format(c(mean(inact.prop), sem(inact.prop))))
+
 # Make new dataframe with proportion metabolic class data
 hab.prop <- data.frame(hab[1:2], hab$gender, act.prop, dorm.prop, dead.prop, inact.prop)
 ```

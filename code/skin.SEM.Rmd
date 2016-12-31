@@ -143,6 +143,10 @@ ave.status <- exp(coef.matrix[,1]) # almost all cells are in dead category
 # Check: proportions should sum to ~1
 sum(ave.status)
 
+plot(ages.2$age,log(ages.2$total), ylim = c(8, 18), cex = 2, pch = 22, col = "black", bg = "grey")
+points(ages.2$age, log(ages.2$active), cex = 2, pch = 22, col = "black", bg = "red")
+
+
 # What happens when you take long showers?
 l3.tot <- exp(coef(f.tot)[1])*exp(coef(f.tot)["show.l3"])
 

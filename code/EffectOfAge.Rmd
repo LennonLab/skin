@@ -1,0 +1,86 @@
+####This page assumes that the analysis from the page FitForMS_gender.R 
+####has already been run. This page will calculate the direct and indirect
+####effect of the aging process on NUMBER of active cells per unit area
+
+#create a vector for the newdata of the predict function
+X.pred<-X[1,]
+X.pred[3:14]<-0
+#we will use it to create a 3 row data.frame for newdata. each will have a different
+#value for the shower length. when we get the predictions for each row
+#we will take a weigted average over the shower length probs. (which are affected by age)
+#set age to 3
+X.pred$age<-3
+#combine in to a data.frame
+X.pred.young<-rbind(X.pred,X.pred,X.pred)
+#set the values of shower length in rows 2 and 3
+X.pred.young$show.l2[2]<-1
+X.pred.young$show.l3[3]<-1
+X.pred.young
+#this is our form of the active model that is useful for the predict function
+summary(f.act<-glm.nb(ages$active~.-total+offset(log(total)),data=X))
+
+#the creates the weight function based on the predctions from the models for
+#shower length. we have models for show.l2 and show.l3. We calculate the prob.
+#of show.l1 (the one used for reference) as 1-sum(prob(show.l2,show.l3))
+wts<-c(0,predict(pred.fits[[9]],X.pred.young,type='response')[1],
+predict(pred.fits[[10]],X.pred.young,type='response')[1])
+wts[1]<-1-sum(wts);wts
+
+#now use our newdata with age and show.l2 info to calculate the effect on total
+#and put the answer into our data.frame
+X.pred.young$total<-predict(f.tot,X.pred.young,type='response');X.pred.young$total
+#now we use this info to calculate the number of active cells
+act1<-predict(f.act,X.pred.young,type='response');act1
+#take the weighted mean 
+yng.act<-act1%*%wts
+#check out weighted total number of cells for young
+yng.tot<-X.pred.young$total%*%wts;yng.tot
+
+#next we do the exact same thing, but we start with age=80
+X.pred$age<-80
+X.pred$show.l2<-0
+X.pred$show.l3<-0
+X.pred.old<-rbind(X.pred,X.pred,X.pred)
+X.pred.old$show.l2[2]<-1
+X.pred.old$show.l3[3]<-1
+X.pred.old
+#calculate weights
+wts<-c(0,predict(pred.fits[[9]],X.pred.old,type='response')[1],
+       predict(pred.fits[[10]],X.pred.old,type='response')[1])
+wts[1]<-1-sum(wts);wts
+#calcuate total cell numbers
+X.pred.old$total<-predict(f.tot,X.pred.old,type='response');X.pred.old$total
+act2<-predict(f.act,X.pred.old,type='response')
+old.act<-act2%*%wts;old.act
+#wow .10 active cells per unit area
+#check out weighted total number of cells for old
+old.tot<-X.pred.old$total%*%wts;old.tot
+#total.effects (sum of indirect and direct effects) 
+#1 what is pct change in total number of cells
+(yng.tot-old.tot)/yng.tot
+##83% reduction in total cell numbers 
+#2 what is pct change in number of active cells
+(yng.act-old.act)/yng.act
+###98% reduction in number of active cells
+
+###find direct effect###
+X.pred$age<-0
+#set total to something..1000 works (it doesnt change the pct. change calc)
+X.pred$total<-1000
+#set shower length to most common (again this doesnt effect pct. change calc)
+X.pred$show.l2<-1
+X.pred$show.l3<-0
+X.pred.dir<-rbind(X.pred,X.pred)
+#set ages
+X.pred.dir$age<-c(3,80)
+X.pred.dir
+dir.eff<-predict(f.act,X.pred.dir,type='response');dir.eff
+#calc pct.change of changeing age and nothing else
+(dir.eff[1]-dir.eff[2])/dir.eff[1]
+#a 93% reduction
+
+#calc direct effect on total
+dir.eff.tot<-predict(f.tot,X.pred.dir,type='response');dir.eff.tot
+(dir.eff.tot[1]-dir.eff.tot[2])/dir.eff.tot[1]
+
+

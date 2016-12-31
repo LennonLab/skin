@@ -1,0 +1,104 @@
+---
+title: "Skin Microbiome"
+author: "Jay T. Lennon"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+   - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+## 1) Set working directory and load packages
+```{r}
+rm(list = ls())
+getwd()
+setwd("~/GitHub/skin")
+require("png")
+require("grid")
+```
+
+## 2) Load data and make conversions
+```{r}
+rpf <- read.table("data/skin.rpf.txt", sep = "\t", header = TRUE)
+
+# Look at raw data structure
+str(rpf)
+
+# Area sampled and treatment volumes
+samp.area <- (4 * 2.54)^2 # cm2 = 4 inch x 4 inch
+samp.vol <- 3.5 # mL buffer in Erlenmeyer
+inoc.vol <- 100 # uL spread to plate
+rpf.vol <- 0.01 # ml in pretreatment
+pretreat.vol <- 1 # ml in pretreatment reaction
+
+# Pretreatments: CFU per cm2
+rpf.pretreat <- rpf[ which(rpf$application=='pretreat'), ]
+pretreat.corr <- ifelse(rpf.pretreat$treatment == 'control', pretreat.vol, pretreat.vol-rpf.vol)
+rpf.CFU.ml.p <- (rpf.pretreat$CFU * (1000/inoc.vol)) /  10^(rpf.pretreat$dilution)
+rpf.CFU.cm.p <- (rpf.CFU.ml.p * samp.vol * pretreat.corr)/samp.area
+rpf.CFU.cm.p <- data.frame(rpf.pretreat[,1:2],rpf.pretreat[,3], rpf.pretreat[,4], rpf.pretreat[,6], rpf.CFU.cm.p)
+colnames(rpf.CFU.cm.p) <- c("sample", "application", "pretreat.t", "habitat", "treatment", "CFU.cm2")
+round(rpf.CFU.cm.p$CFU.cm2, 2)
+
+# Media: CFU per cm2
+rpf.media <- rpf[ which(rpf$application=='media'), ]
+rpf.CFU.cm.m <- ((rpf.media$CFU * (1000/inoc.vol)) /  10^(rpf.media$dilution)) * samp.vol / samp.area
+rpf.CFU.cm.m <- data.frame(rpf.media[,1:2],rpf.media[,3], rpf.media[,4], rpf.media[,6], rpf.CFU.cm.m)
+colnames(rpf.CFU.cm.m) <- c("sample", "application", "pretreat.t", "habitat", "treatment", "CFU.cm2")
+round(rpf.CFU.cm.m$CFU.cm2, 2)
+
+# All: CFU per cm2
+rpf.CFU.all <- rbind(rpf.CFU.cm.p, rpf.CFU.cm.m)
+rpf.CFU.control <- rpf.CFU.all[which(rpf.CFU.all$treatment == "control"), ]
+rpf.CFU.control.mean <- aggregate(rpf.CFU.control$CFU.cm2 ~ rpf.CFU.control$sample, FUN=mean)
+rpf.CFU.control.sem <- aggregate(rpf.CFU.control$CFU.cm2 ~ rpf.CFU.control$sample, FUN=sem)
+colnames(rpf.CFU.control.mean) <- c("sample.control", "CFU.control")
+
+rpf.CFU.RPF <- rpf.CFU.all[which(rpf.CFU.all$treatment == "RPF"), ]
+rpf.CFU.RPF.mean <- aggregate(rpf.CFU.RPF$CFU.cm2 ~ rpf.CFU.RPF$sample, FUN=mean)
+rpf.CFU.RPF.sem <- aggregate(rpf.CFU.RPF$CFU.cm2 ~ rpf.CFU.RPF$sample, FUN=sem)
+colnames(rpf.CFU.RPF.mean) <- c("sample.RPF", "CFU.RPF")
+
+rpf.CFU.pairs <- data.frame(rpf.CFU.control.mean, rpf.CFU.RPF.mean)
+rpf.mat <- as.matrix(sapply(rpf.CFU.pairs, as.numeric)) 
+rpf.mat <-cbind(rpf.mat[,2],rpf.mat[,4])
+colnames(rpf.mat) <- c("control", "Rpf")
+```
+
+## 3) Statistics and plots
+```{r}
+t.test <- t.test(log10(rpf.CFU.pairs$CFU.control), log10(rpf.CFU.pairs$CFU.RPF), paired=TRUE, var.equal = TRUE)
+# t = -3.7885, df = 6, p-value = 0.009089
+# one-taled: alternative = "less" : t = -3.7885, df = 6, p-value = 0.004545
+
+png(filename="~/GitHub/skin/figures/skin.rpf.png",
+    width = 800, height = 1000, res = 96*2)
+
+par(mar = c(5, 6, 4, 2))
+
+matplot(t(log10(rpf.mat)), xlim = c( 0.75, 2.25), ylim = c(2, 7), type = "b", lwd = 1.5, cex = 1.75,
+        lty = 5, pch = 22, col = "black", bg = "black", las = 1, xaxt = "n", yaxt = "n", 
+        ylab = "", cex.lab = 1.5) 
+box(lwd = 2)
+
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.5, las = 1,
+              labels = c(expression('10'^2*''), expression('10'^3*''),expression('10'^4*''), 
+               expression('10'^5*''), expression('10'^6*''), expression('10'^7*'')), at = c(2, 3, 4, 5, 6, 7))
+
+axis(side = 1, lwd.ticks = 0, cex.axis = 1.5, las = 1,
+    labels = c("- Rpf", "+ Rpf"), at = c(1, 2))
+
+mtext(expression('Bacterial Abundance (CFU cm'^2*')'), side = 2, outer = TRUE, 
+      cex = 1.5, line = -2, adj = 0.5)
+
+#mtext(expression(~italic("P")~"= 0.009"), line = -16, cex = 1, at = 1.9)
+
+# Close Plot Device
+dev.off()
+graphics.off()
+
+# Show Plot
+img <- readPNG("~/GitHub/skin/figures/skin.rpf.png")
+grid.raster(img)
+```
+

@@ -8,15 +8,16 @@ output: pdf_document
 geometry: margin=2.54cm
 ---
 
-## 1) Retrieve and Set Your Working Directory
-
+## 1) Set working directory and load packages
 ```{r, results = 'hide'}
 rm(list = ls())
 getwd()
 setwd("~/GitHub/skin")
+require("png")
+require("grid")
 ```
 
-### 2) E. coli control
+### 2) E. coli control - SYTOX Green on cells with 70% isopropyl ETOH = "killed"
 ```{r}
 ec.kill <- c(17, 685, 3700) # active, dormant, dead
 ec.kill.rel <- ec.kill / sum(ec.kill) * 100
@@ -24,16 +25,21 @@ ec.kill.rel <- ec.kill / sum(ec.kill) * 100
 ec.live <- c(2256, 455, 287)  # active, dormant, dead
 ec.live.rel <- ec.live / sum(ec.live) * 100
 
-## 2) Load data
+# Control: 75% active; 15% dormant; 9.6% dead
+# Kill: 0.4% active; 16% dormant; 84% dead
+```
+
+## 3) Skin-strains - do active cells take up CTC? do dead cells not take it up?
+
+### Load raw data
 ```{r}
-# Load raw data
 ctc <- read.table("data/skin.isolate.CTC.txt", sep = "\t", header = TRUE)
 
 # Look at raw data structure
 str(ctc)
 ```
 
-## 3) Subsetting Data
+### Subsetting Data
 ```{r}
 # treatment info
 treat <- cbind(as.data.frame(ctc$Strain), ctc$Rep, ctc$Treat)
@@ -48,9 +54,9 @@ kill <- ctc[ctc$Treat == "kill",]
 plus <- ctc[ctc$Treat == "plus",]
 ```
 
-## 4) Correcting and making new dataframe
+### Correcting and making new dataframe
 ```{r}
-# Correct dtat by controls
+# Correct data by controls
 
 # kill-corrected
 kill.corr <- kill$Fluor - minus$Fluor
@@ -70,7 +76,7 @@ data.corr$plus.corr <- as.numeric(as.character(data.corr$plus.corr))
 as.data.frame(data.corr)
 ```
 
-## 5) Multiple paired t-test
+### Multiple paired t-test
 ```{r}
 # Create output matrix for summary statistics
 test.out <- matrix(data =NA, length(levels(data.corr$strains)), 3)
@@ -94,8 +100,9 @@ test.out.final <- cbind(test.out, p.adjust)
 # For loop to run t-tests
 ```
   
-## 6) Means and figure
+### Calculating summary statistics 
 ```{r}
+# Create empty matrix to be filled with summary data
 summary.out <- matrix(data = NA, length(unique(strains)), 4)
 row.names(summary.out) <- c("K1", "K2", "K3", "F1", "F2", "B1", "K4", "K5", "K6", "EC")
 colnames(summary.out) <- c("mean.dead", "sem.dead", "mean.live", "sem.live")
@@ -110,18 +117,31 @@ for(i in levels(data.corr$strains)) {
   summary.out[i, "sem.live"] <- test[4]
   }
 
+# Sort data alphabetically by strain ID
+summary.out <- summary.out[ order(row.names(summary.out)), ]
+
 # Fold differences
 fold.out <- summary.out[,3] / summary.out[,1]
 mean.fold.out <- mean(fold.out)
 sem.fold.out <- sem(fold.out)
+# 42-fold higher CTC in control vs. killed cells
+```
 
+### Plotting 
+```{r}
+### For plotting x axes
 x.dead <- c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225)
 x.live <- x.dead 
 
-plot.new()
+png(filename="~/GitHub/skin/figures/skin.controls.png",
+    width = 1200, height = 800, res = 96*2)
+
+par(mar = c(5, 6, 4, 2))
+ 
+# add kill points
 plot(x.dead, summary.out[,1], type = "p", pch = 22, bg = "white", col = "black", 
      las = 1, xlim = c(-20, 250), ylim = c(-500, 60000), cex = 2, yaxt = "n", 
-     cex.lab = 2, cex.axis = 1.5, ylab = "", xlab = "", yaxt = "n", xaxt = "n",
+      cex.axis = 1.5, cex.lab = 1.5, ylab = "", xlab = "Strains", yaxt = "n", xaxt = "n",
      lwd = 2,
      panel.first={
        arrows(x0 = x.dead, y0 = summary.out[,1], y1 = summary.out[,1] - summary.out[,2], angle = 90, 
@@ -130,8 +150,7 @@ plot(x.dead, summary.out[,1], type = "p", pch = 22, bg = "white", col = "black",
        length = 0.05, lwd = 2)
 })  
      
-
-
+# add control points
 points(x.live, summary.out[,3], type = "p", pch = 22, bg = "black", 
        col = "black", cex = 2,
 
@@ -143,19 +162,34 @@ points(x.live, summary.out[,3], type = "p", pch = 22, bg = "black",
 })  
 
 # Major Axes
-axis(side = 2, lwd.ticks = 2, cex.axis = 1.5, las = 1,
-    labels = c(0, 25000, 50000), at = c(0, 25000, 60000))
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.25, las = 1,
+    labels = c(0, 25000, 50000), at = c(0, 25000, 50000))
  
 axis(side = 4, lwd.ticks = 2, cex.axis = 1.5, las = 1,
     at=c(0, 25000, 50000), labels = F)
  
 axis(side = 1, lwd.ticks = 2, cex.axis = 1, las = 1,
-    labels = c("K1", "K2", "K3", "F1", "F2", "B1", "K4", "K5", "K6", "EC"), 
+    labels = c("B1", "EC", "F1", "F2", "K1", "K2", "K3", "K4", "K5", "K6"), 
     at = c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225))
 
 axis(side = 3, lwd.ticks = 2, cex.axis = 1.5, las = 1,
     at = c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225), labels = F)
 
 box(lwd = 2)
+
+mtext('Relative Activity', side = 2, 
+      outer = TRUE, cex = 1.5, line = -1.4, adj = 0.5)
+
+legend(200, 60000, c("control", "killed"), pch = 22, pt.bg = c("black", "white"), 
+       pt.cex = 2, pt.lwd = 2, bty = 'n', y.intersp = 1)
+
+
+# Close Plot Device
+dev.off()
+graphics.off()
+
+# Show Plot
+img <- readPNG("~/GitHub/skin/figures/skin.controls.png")
+grid.raster(img)
 ```
 
